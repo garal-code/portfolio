@@ -1,0 +1,79 @@
+---
+import { jobs, isCurrentJob } from "../data/resume.ts";
+
+/** Format "YYYY-MM" → "Ene 2022" (Spanish abbreviated month) */
+function formatDate(dateStr: string): string {
+  const [year, month] = dateStr.split("-");
+  const date = new Date(Number(year), Number(month) - 1);
+  return date.toLocaleDateString("es-ES", { month: "short", year: "numeric" });
+}
+---
+
+<section
+  id="experience"
+  aria-label="Experiencia profesional"
+  class="py-24 px-6"
+>
+  <div class="max-w-4xl mx-auto">
+    <!-- Heading -->
+    <div class="mb-12" data-animate>
+      <h2 class="text-3xl sm:text-4xl font-bold text-text mb-2">Experiencia</h2>
+      <div class="h-0.5 w-16 bg-accent rounded-full"></div>
+    </div>
+
+    <!-- Timeline -->
+    <ol class="relative border-l border-border pl-8 space-y-12">
+      {
+        jobs.map((job) => (
+          <li class="relative" data-animate>
+            <!-- Timeline dot -->
+            <span
+              class="absolute -left-[2.65rem] top-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-accent bg-bg"
+              aria-hidden="true"
+            >
+              <span class="h-2 w-2 rounded-full bg-accent" />
+            </span>
+
+            <!-- Job card -->
+            <article class="rounded-xl border border-border bg-surface p-6 transition-colors hover:border-accent/50">
+              <!-- Header -->
+              <header class="mb-3">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+                  <h3 class="text-lg font-semibold text-text">{job.role}</h3>
+                  <time
+                    class="text-xs font-medium text-text-muted shrink-0"
+                    datetime={job.startDate}
+                  >
+                    {formatDate(job.startDate)} —{" "}
+                    {isCurrentJob(job) ? (
+                      <span class="text-accent font-semibold">Actualidad</span>
+                    ) : (
+                      <span>{formatDate(job.endDate!)}</span>
+                    )}
+                  </time>
+                </div>
+                <p class="text-sm font-medium text-accent mt-0.5">{job.company}</p>
+              </header>
+
+              <!-- Description -->
+              <p class="text-sm text-text-muted leading-relaxed mb-4">
+                {job.description}
+              </p>
+
+              <!-- Tech tags -->
+              <ul class="flex flex-wrap gap-2" aria-label="Tecnologías">
+                {job.technologies.map((tech) => (
+                  <li>
+                    <span class="inline-block rounded-md border border-border bg-bg px-2.5 py-0.5 text-xs font-medium text-text-muted">
+                      {tech}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </article>
+          </li>
+        ))
+      }
+    </ol>
+  </div>
+</section>

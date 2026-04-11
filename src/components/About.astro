@@ -1,0 +1,51 @@
+---
+import Logo from "./Logo.astro";
+import { personalInfo } from "../data/resume.ts";
+---
+
+<section
+  id="about"
+  aria-label="Sobre mí"
+  class="py-24 px-6"
+>
+  <div class="max-w-4xl mx-auto">
+    <div class="flex flex-col sm:flex-row items-start sm:items-center gap-6 mb-10" data-animate>
+      <Logo size={56} class="text-accent shrink-0" />
+      <div>
+        <h2 class="text-3xl sm:text-4xl font-bold text-text mb-1">Sobre mí</h2>
+        <div class="h-0.5 w-16 bg-accent rounded-full mt-2"></div>
+      </div>
+    </div>
+
+    <div data-animate>
+      <p class="text-base sm:text-lg text-text-muted leading-relaxed max-w-2xl">
+        {personalInfo.bio}
+      </p>
+
+      <!-- Contact email -->
+      <div class="mt-8">
+        <a
+          href={`mailto:${personalInfo.email}`}
+          class="inline-flex items-center gap-2 text-sm text-text-muted hover:text-accent transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2 rounded"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <rect width="20" height="16" x="2" y="4" rx="2" />
+            <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+          </svg>
+          {personalInfo.email}
+        </a>
+      </div>
+    </div>
+  </div>
+</section>

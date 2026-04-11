@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <!-- Background -->
+  <rect width="1200" height="630" fill="#0a0a0a"/>
+
+  <!-- Subtle grid pattern -->
+  <defs>
+    <pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse">
+      <path d="M 60 0 L 0 0 0 60" fill="none" stroke="#262626" stroke-width="1"/>
+    </pattern>
+    <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6366f1" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#6366f1" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#grid)"/>
+  <rect width="1200" height="630" fill="url(#accentGrad)"/>
+
+  <!-- Accent border top -->
+  <rect width="1200" height="4" fill="#6366f1"/>
+
+  <!-- JG Monogram -->
+  <g transform="translate(100, 180)">
+    <circle cx="48" cy="48" r="46" stroke="#6366f1" stroke-width="2" fill="none" opacity="0.4"/>
+    <!-- J -->
+    <path d="M22 16h14v38c0 5.5-3.5 10-11 10S8 59.5 8 53V49h9v4c0 2.5 1 3.5 2.5 3.5S22 55.5 22 53V16z" fill="#e5e5e5"/>
+    <!-- G -->
+    <path d="M41 46v8h11v-4.5H48V46h11v11c0 2.5-2 4.5-5.5 4.5H45c-4 0-6.5-2.5-6.5-6.5V31c0-4 2.5-6.5 6.5-6.5h8.5c3.5 0 5.5 2 5.5 4.5V37H51V30.5h-5.5V46H41z" fill="#e5e5e5"/>
+  </g>
+
+  <!-- Name -->
+  <text
+    x="248"
+    y="248"
+    font-family="ui-sans-serif, system-ui, -apple-system, sans-serif"
+    font-size="72"
+    font-weight="700"
+    fill="#e5e5e5"
+    letter-spacing="-2"
+  >Javier García</text>
+
+  <!-- Title -->
+  <text
+    x="250"
+    y="316"
+    font-family="ui-sans-serif, system-ui, -apple-system, sans-serif"
+    font-size="32"
+    font-weight="500"
+    fill="#6366f1"
+    letter-spacing="0"
+  >Backend Engineer</text>
+
+  <!-- Divider -->
+  <rect x="250" y="350" width="80" height="3" fill="#6366f1" rx="2"/>
+
+  <!-- Bio snippet -->
+  <text
+    x="250"
+    y="406"
+    font-family="ui-sans-serif, system-ui, -apple-system, sans-serif"
+    font-size="24"
+    fill="#a3a3a3"
+  >Spring Boot · Microservicios · Arquitectura Limpia</text>
+
+  <!-- URL -->
+  <text
+    x="250"
+    y="540"
+    font-family="ui-sans-serif, system-ui, -apple-system, sans-serif"
+    font-size="20"
+    fill="#525252"
+  >javiergarciaalvarez95.github.io/portfolio</text>
+</svg>

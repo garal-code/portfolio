@@ -1,0 +1,41 @@
+---
+interface Props {
+  class?: string;
+  size?: number;
+}
+
+const { class: className = "", size = 48 } = Astro.props;
+---
+
+<svg
+  width={size}
+  height={size}
+  viewBox="0 0 48 48"
+  fill="none"
+  xmlns="http://www.w3.org/2000/svg"
+  role="img"
+  aria-label="JG monogram"
+  class={className}
+>
+  <!-- Outer ring -->
+  <circle
+    cx="24"
+    cy="24"
+    r="22"
+    stroke="currentColor"
+    stroke-width="1.5"
+    opacity="0.3"
+  />
+
+  <!-- Letter J -->
+  <path
+    d="M16 13h5v16c0 2.5-1.5 4.5-4.5 4.5S12 31.5 12 29v-1.5h3.5V29c0 1 .5 1.5 1 1.5s1-.5 1-1.5V13z"
+    fill="currentColor"
+  />
+
+  <!-- Letter G -->
+  <path
+    d="M24.5 24.5V28h4v-2h-1.5v-1.5H31v5c0 1.2-1 2-2.5 2h-3c-1.8 0-3-1.2-3-3V18c0-1.8 1.2-3 3-3h3c1.5 0 2.5.8 2.5 2v3.5h-3.5V17.5h-2V24.5h2.5z"
+    fill="currentColor"
+  />
+</svg>
