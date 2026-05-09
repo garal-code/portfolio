@@ -1,0 +1,168 @@
+---
+import Layout from "../layouts/Layout.astro";
+import Logo from "../components/Logo.astro";
+import { personalInfo } from "../data/resume.ts";
+
+const principles = [
+  {
+    key: "S",
+    title: "Single Responsibility",
+    summary: "Cada clase hace una sola cosa y la hace bien.",
+    spring: "En Spring, separa orquestación, persistencia, cálculo y notificación en beans distintos.",
+  },
+  {
+    key: "O",
+    title: "Open / Closed",
+    summary: "Extiende el comportamiento sin reescribir la base.",
+    spring: "Añade nuevas estrategias con nuevas implementaciones de una interfaz, no con if/else infinitos.",
+  },
+  {
+    key: "L",
+    title: "Liskov Substitution",
+    summary: "Cualquier implementación debe poder sustituir a la abstracción sin romper nada.",
+    spring: "Si un bean implementa tu contrato, el servicio consumidor no debería notar la diferencia.",
+  },
+  {
+    key: "I",
+    title: "Interface Segregation",
+    summary: "Interfaces pequeñas y enfocadas, no contratos gigantes.",
+    spring: "Divide puertos por caso de uso: persistir, notificar, cobrar. No mezcles todo en una sola interfaz.",
+  },
+  {
+    key: "D",
+    title: "Dependency Inversion",
+    summary: "Los servicios dependen de abstracciones, no de detalles concretos.",
+    spring: "Inyecta interfaces por constructor y deja que Spring resuelva las implementaciones.",
+  },
+];
+
+const codeExample = `@Service
+public class CheckoutService {
+  private final OrderRepository orderRepository;
+  private final PaymentProcessor paymentProcessor;
+  private final NotificationPort notificationPort;
+
+  public CheckoutService(
+      OrderRepository orderRepository,
+      PaymentProcessor paymentProcessor,
+      NotificationPort notificationPort
+  ) {
+    this.orderRepository = orderRepository;
+    this.paymentProcessor = paymentProcessor;
+    this.notificationPort = notificationPort;
+  }
+
+  public Order checkout(Order order) {
+    order.validate();
+    paymentProcessor.process(order);
+
+    Order saved = orderRepository.save(order);
+    notificationPort.notifyOrderCreated(saved);
+    return saved;
+  }
+}
+
+public interface PaymentProcessor {
+  void process(Order order);
+}
+
+@Component
+public class StripePaymentProcessor implements PaymentProcessor {
+  @Override
+  public void process(Order order) {
+    // Integración con Stripe
+  }
+}`;
+---
+
+<Layout
+  title="Clean Code — SOLID en Spring"
+  description="Mapa práctico de los principios SOLID con un ejemplo real de implementación en Spring Boot."
+>
+  <section class="min-h-screen px-6 py-16">
+    <div class="max-w-5xl mx-auto space-y-16">
+      <header class="space-y-8" data-animate>
+        <div class="flex items-center gap-4">
+          <Logo size={54} class="text-accent" />
+          <div>
+            <p class="text-sm uppercase tracking-[0.3em] text-text-muted">Clean Code</p>
+            <h1 class="text-4xl sm:text-5xl font-bold text-text">SOLID en Spring</h1>
+          </div>
+        </div>
+
+        <p class="max-w-3xl text-lg text-text-muted leading-relaxed">
+          Un mapa rápido para escribir backend mantenible: entender el principio, ver el olor que evita y aterrizarlo en Spring Boot con inyección de dependencias y contratos pequeños.
+        </p>
+
+        <div class="flex flex-wrap gap-3">
+          <a
+            href={`${import.meta.env.BASE_URL}`}
+            class="inline-flex items-center justify-center rounded-lg border border-border bg-surface px-5 py-3 text-sm font-semibold text-text transition-colors hover:border-accent hover:text-accent"
+          >
+            Volver al portfolio
+          </a>
+          <a
+            href="#example"
+            class="inline-flex items-center justify-center rounded-lg bg-accent px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-accent-hover"
+          >
+            Ver ejemplo en Spring
+          </a>
+        </div>
+      </header>
+
+      <section class="space-y-6" data-animate>
+        <div>
+          <p class="text-sm font-semibold uppercase tracking-[0.25em] text-accent">Mapa mental</p>
+          <h2 class="mt-2 text-2xl sm:text-3xl font-bold text-text">Principios SOLID</h2>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {principles.map((item) => (
+            <article class="rounded-xl border border-border bg-surface p-6">
+              <div class="flex items-start gap-4">
+                <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-lg font-bold text-accent">
+                  {item.key}
+                </div>
+                <div class="space-y-2">
+                  <h3 class="text-lg font-semibold text-text">{item.title}</h3>
+                  <p class="text-sm text-text-muted leading-relaxed">{item.summary}</p>
+                  <p class="text-sm text-text-muted leading-relaxed">
+                    <span class="font-semibold text-text">Spring:</span> {item.spring}
+                  </p>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section id="example" class="grid grid-cols-1 lg:grid-cols-[0.95fr_1.05fr] gap-6" data-animate>
+        <article class="rounded-xl border border-border bg-surface p-6 space-y-4">
+          <p class="text-sm font-semibold uppercase tracking-[0.25em] text-accent">Ejemplo</p>
+          <h2 class="text-2xl font-bold text-text">Checkout en Spring Boot</h2>
+          <p class="text-sm text-text-muted leading-relaxed">
+            El servicio orquesta el flujo, pero no conoce detalles de Stripe, email o base de datos. Eso permite cambiar implementaciones sin tocar la lógica principal.
+          </p>
+
+          <ul class="space-y-3 text-sm text-text-muted">
+            <li><span class="font-semibold text-text">S:</span> el servicio solo coordina el checkout.</li>
+            <li><span class="font-semibold text-text">O:</span> puedes sumar otro procesador de pago sin rehacer el servicio.</li>
+            <li><span class="font-semibold text-text">L:</span> cualquier `PaymentProcessor` válido sustituye a otro.</li>
+            <li><span class="font-semibold text-text">I:</span> cada puerto expone solo lo que necesita.</li>
+            <li><span class="font-semibold text-text">D:</span> Spring inyecta interfaces, no detalles.</li>
+          </ul>
+        </article>
+
+        <pre class="overflow-x-auto rounded-xl border border-border bg-bg p-6 text-sm leading-relaxed text-text-muted"><code>{codeExample}</code></pre>
+      </section>
+
+      <section class="rounded-xl border border-border bg-surface p-6" data-animate>
+        <h2 class="text-2xl font-bold text-text mb-4">Idea clave</h2>
+        <p class="text-base text-text-muted leading-relaxed max-w-3xl">
+          Clean Code no es decorar clases: es reducir fricción para cambiar el sistema mañana. En un backend Spring bien armado, eso se traduce en servicios pequeños, contratos claros y dependencias invertidas.
+        </p>
+        <p class="mt-4 text-sm font-medium text-accent">{personalInfo.name}</p>
+      </section>
+    </div>
+  </section>
+</Layout>
