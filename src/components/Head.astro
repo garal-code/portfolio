@@ -1,12 +1,14 @@
 ---
+import { personalInfo } from "../data/resume.ts";
+
 interface Props {
   title?: string;
   description?: string;
 }
 
 const {
-  title = "Javier García — Backend Engineer",
-  description = "Portfolio of Javier García, Backend Engineer specializing in Spring Boot, microservices, and clean architecture.",
+  title = `${personalInfo.name} — ${personalInfo.title}`,
+  description = personalInfo.summary,
 } = Astro.props;
 
 const canonicalURL = new URL(Astro.url.pathname, Astro.site);
@@ -15,13 +17,10 @@ const ogImage = new URL("/portfolio/og-image.svg", Astro.site);
 const personSchema = {
   "@context": "https://schema.org",
   "@type": "Person",
-  name: "Javier García",
-  jobTitle: "Backend Engineer",
+  name: personalInfo.name,
+  jobTitle: personalInfo.title,
   url: Astro.site?.toString(),
-  sameAs: [
-    "https://github.com/javiergarciaalvarez95",
-    "https://linkedin.com/in/javiergarciaalvarez95",
-  ],
+  sameAs: [personalInfo.links.github, personalInfo.links.linkedin].filter(Boolean),
 };
 ---
 
@@ -32,7 +31,7 @@ const personSchema = {
 <!-- Primary Meta -->
 <title>{title}</title>
 <meta name="description" content={description} />
-<meta name="author" content="Javier García" />
+<meta name="author" content={personalInfo.name} />
 
 <!-- Open Graph -->
 <meta property="og:title" content={title} />
@@ -40,7 +39,7 @@ const personSchema = {
 <meta property="og:image" content={ogImage} />
 <meta property="og:type" content="website" />
 <meta property="og:url" content={canonicalURL} />
-<meta property="og:site_name" content="Javier García" />
+<meta property="og:site_name" content={personalInfo.name} />
 
 <!-- Twitter Card -->
 <meta name="twitter:card" content="summary_large_image" />

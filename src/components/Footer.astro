@@ -15,7 +15,7 @@ const currentYear = new Date().getFullYear();
             href={personalInfo.links.github}
             target="_blank"
             rel="noopener noreferrer"
-            aria-label="GitHub de Javier García"
+            aria-label={`GitHub de ${personalInfo.name}`}
             class="text-text-muted transition-colors hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2 rounded"
           >
             <svg
@@ -39,7 +39,7 @@ const currentYear = new Date().getFullYear();
             href={personalInfo.links.linkedin}
             target="_blank"
             rel="noopener noreferrer"
-            aria-label="LinkedIn de Javier García"
+            aria-label={`LinkedIn de ${personalInfo.name}`}
             class="text-text-muted transition-colors hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2 rounded"
           >
             <svg
@@ -86,7 +86,7 @@ const currentYear = new Date().getFullYear();
 
     <!-- Copyright -->
     <p class="text-xs text-text-muted">
-      &copy; {currentYear} Javier García
+      &copy; {currentYear} {personalInfo.name}
     </p>
   </div>
 </footer>
