@@ -4,19 +4,17 @@ import { personalInfo } from "../data/resume.ts";
 const currentYear = new Date().getFullYear();
 ---
 
-<footer class="border-t border-border py-12 px-6" aria-label="Pie de página">
-  <div class="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6">
-    <!-- Social links -->
+<footer class="px-6 py-16" aria-label="Pie de página">
+  <div class="section-panel mx-auto flex max-w-5xl flex-col gap-6 rounded-[2rem] border border-border px-8 py-8 sm:flex-row sm:items-center sm:justify-between">
     <nav aria-label="Redes sociales y contacto">
       <ul class="flex items-center gap-6">
-        <!-- GitHub -->
         <li>
           <a
             href={personalInfo.links.github}
             target="_blank"
             rel="noopener noreferrer"
             aria-label={`GitHub de ${personalInfo.name}`}
-            class="text-text-muted transition-colors hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2 rounded"
+            class="inline-flex h-12 w-12 items-center justify-center rounded-full border border-border bg-white text-text-muted hover:border-accent hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -33,14 +31,13 @@ const currentYear = new Date().getFullYear();
           </a>
         </li>
 
-        <!-- LinkedIn -->
         <li>
           <a
             href={personalInfo.links.linkedin}
             target="_blank"
             rel="noopener noreferrer"
             aria-label={`LinkedIn de ${personalInfo.name}`}
-            class="text-text-muted transition-colors hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2 rounded"
+            class="inline-flex h-12 w-12 items-center justify-center rounded-full border border-border bg-white text-text-muted hover:border-plum hover:text-plum focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -57,12 +54,11 @@ const currentYear = new Date().getFullYear();
           </a>
         </li>
 
-        <!-- Email -->
         <li>
           <a
             href={`mailto:${personalInfo.email}`}
             aria-label={`Enviar email a ${personalInfo.email}`}
-            class="text-text-muted transition-colors hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2 rounded"
+            class="inline-flex h-12 w-12 items-center justify-center rounded-full border border-border bg-white text-text-muted hover:border-amber hover:text-amber focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -84,9 +80,11 @@ const currentYear = new Date().getFullYear();
       </ul>
     </nav>
 
-    <!-- Copyright -->
-    <p class="text-xs text-text-muted">
-      &copy; {currentYear} {personalInfo.name}
-    </p>
+    <div class="text-center sm:text-right">
+      <p class="font-display text-xl text-text">{personalInfo.name}</p>
+      <p class="mt-1 text-xs font-semibold uppercase tracking-[0.18em] text-text-muted">
+        &copy; {currentYear} · backend engineering · clean code mindset
+      </p>
+    </div>
   </div>
 </footer>

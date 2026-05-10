@@ -1,7 +1,6 @@
 ---
 import { jobs, isCurrentJob } from "../data/resume.ts";
 
-/** Format "YYYY" / "YYYY-MM" → label in Spanish */
 function formatDate(dateStr: string): string {
   const [year, month = "01"] = dateStr.split("-");
 
@@ -14,62 +13,51 @@ function formatDate(dateStr: string): string {
 }
 ---
 
-<section
-  id="experience"
-  aria-label="Experiencia profesional"
-  class="py-24 px-6"
->
-  <div class="max-w-4xl mx-auto">
-    <!-- Heading -->
+<section id="experience" aria-label="Experiencia profesional" class="px-6 py-24">
+  <div class="mx-auto max-w-5xl">
     <div class="mb-12" data-animate>
-      <h2 class="text-3xl sm:text-4xl font-bold text-text mb-2">Experiencia</h2>
-      <div class="h-0.5 w-16 bg-accent rounded-full"></div>
+      <span class="eyebrow">Trayectoria</span>
+      <h2 class="font-display mt-3 text-3xl font-bold text-text sm:text-4xl">Experiencia</h2>
     </div>
 
-    <!-- Timeline -->
-    <ol class="relative border-l border-border pl-8 space-y-12">
+    <ol class="relative space-y-10 border-l border-accent/20 pl-8">
       {
         jobs.map((job) => (
           <li class="relative" data-animate>
-            <!-- Timeline dot -->
             <span
-              class="absolute -left-[2.65rem] top-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-accent bg-bg"
+              class="absolute -left-[2.7rem] top-6 flex h-5 w-5 items-center justify-center rounded-full border-2 border-accent bg-bg"
               aria-hidden="true"
             >
-              <span class="h-2 w-2 rounded-full bg-accent" />
+              <span class="h-2 w-2 rounded-full bg-plum" />
             </span>
 
-            <!-- Job card -->
-            <article class="rounded-xl border border-border bg-surface p-6 transition-colors hover:border-accent/50">
-              <!-- Header -->
+            <article class="section-panel rounded-[1.9rem] p-6 transition-colors hover:border-accent/40 sm:p-8">
               <header class="mb-3">
-                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
-                  <h3 class="text-lg font-semibold text-text">{job.role}</h3>
+                <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                  <h3 class="font-display text-2xl font-bold text-text">{job.role}</h3>
                   <time
-                    class="text-xs font-medium text-text-muted shrink-0"
+                    class="shrink-0 text-xs font-semibold uppercase tracking-[0.16em] text-text-muted"
                     datetime={job.startDate}
                   >
                     {formatDate(job.startDate)} —{" "}
                     {isCurrentJob(job) ? (
-                      <span class="text-accent font-semibold">Actualidad</span>
+                      <span class="font-semibold text-accent">Actualidad</span>
                     ) : (
                       <span>{formatDate(job.endDate!)}</span>
                     )}
                   </time>
                 </div>
-                <p class="text-sm font-medium text-accent mt-0.5">{job.company}</p>
+                <p class="mt-1 text-sm font-semibold uppercase tracking-[0.16em] text-plum">{job.company}</p>
               </header>
 
-              <!-- Description -->
-              <p class="text-sm text-text-muted leading-relaxed mb-4">
+              <p class="font-body mb-5 text-base leading-8 text-umber">
                 {job.description}
               </p>
 
-              <!-- Tech tags -->
               <ul class="flex flex-wrap gap-2" aria-label="Tecnologías">
                 {job.technologies.map((tech) => (
                   <li>
-                    <span class="inline-block rounded-md border border-border bg-bg px-2.5 py-0.5 text-xs font-medium text-text-muted">
+                    <span class="inline-block rounded-full border border-border bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-umber">
                       {tech}
                     </span>
                   </li>

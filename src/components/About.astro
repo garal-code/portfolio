@@ -3,40 +3,46 @@ import Logo from "./Logo.astro";
 import { personalInfo } from "../data/resume.ts";
 ---
 
-<section
-  id="about"
-  aria-label="Sobre mí"
-  class="py-24 px-6"
->
-  <div class="max-w-4xl mx-auto">
-    <div class="flex flex-col sm:flex-row items-start sm:items-center gap-6 mb-10" data-animate>
-      <Logo size={56} class="text-accent shrink-0" />
+<section id="about" aria-label="Sobre mí" class="px-6 py-24">
+  <div class="mx-auto max-w-5xl">
+    <div class="flex flex-col items-start gap-6 sm:flex-row sm:items-center" data-animate>
+      <div class="flex h-16 w-16 items-center justify-center rounded-full border border-amber/30 bg-white/80 shadow-[0_12px_24px_rgba(42,36,32,0.08)]">
+        <Logo size={52} class="text-accent" />
+      </div>
       <div>
-        <h2 class="text-3xl sm:text-4xl font-bold text-text mb-1">Sobre mí</h2>
-        <div class="h-0.5 w-16 bg-accent rounded-full mt-2"></div>
+        <span class="eyebrow">Perfil</span>
+        <h2 class="font-display mt-3 text-3xl font-bold text-text sm:text-4xl">Sobre mí</h2>
       </div>
     </div>
 
-    <div data-animate>
-      <p class="text-base sm:text-lg text-text-muted leading-relaxed max-w-2xl">
-        {personalInfo.bio}
-      </p>
+    <div class="section-panel mt-10 rounded-[2rem] p-8 sm:p-10" data-animate>
+      <div class="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
+        <div>
+          <p class="font-body max-w-2xl text-lg leading-8 text-umber">
+            {personalInfo.bio}
+          </p>
 
-      <p class="mt-4 text-sm font-medium text-accent">{personalInfo.location}</p>
+          <p class="mt-6 text-sm font-semibold uppercase tracking-[0.18em] text-accent">
+            {personalInfo.location}
+          </p>
+        </div>
 
-      <ul class="mt-6 grid gap-3 sm:grid-cols-2 max-w-3xl">
-        {personalInfo.highlights.map((highlight) => (
-          <li class="rounded-lg border border-border bg-surface px-4 py-3 text-sm text-text-muted">
-            {highlight}
-          </li>
-        ))}
-      </ul>
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-[0.2em] text-plum">Qué aporto</p>
+          <ul class="mt-4 grid gap-3">
+            {personalInfo.highlights.map((highlight) => (
+              <li class="rounded-2xl border border-border bg-white/80 px-4 py-4 text-sm leading-6 text-umber shadow-[0_10px_24px_rgba(42,36,32,0.05)]">
+                {highlight}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
 
-      <!-- Contact email -->
-      <div class="mt-8">
+      <div class="mt-8 border-t border-border pt-6">
         <a
           href={`mailto:${personalInfo.email}`}
-          class="inline-flex items-center gap-2 text-sm text-text-muted hover:text-accent transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2 rounded"
+          class="inline-flex items-center gap-2 rounded-full border border-border bg-white px-4 py-2 text-sm font-semibold text-umber hover:border-accent hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"

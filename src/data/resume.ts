@@ -57,7 +57,7 @@ export interface Skill {
 export const personalInfo: PersonalInfo = {
   name: "Javier García Álvarez",
   title: "Desarrollador Backend",
-  location: "Madrid, España",
+  location: "Malaga, España",
   bio: "Desarrollador backend con más de 5 años de experiencia en plataformas empresariales, especializado en Spring Boot y arquitecturas orientadas a servicios. Actualmente explorando el espacio de IA aplicada a finanzas: construyo herramientas propias para análisis de inversión y automatización con agentes. Me muevo bien en entornos complejos, aprendo rápido y tengo una inclinación natural por entender los sistemas desde dentro hacia fuera.",
   summary:
     "Especializado en Java y Spring Boot, con experiencia en APIs REST, observabilidad, procesamiento de datos y mantenimiento evolutivo de plataformas complejas.",
