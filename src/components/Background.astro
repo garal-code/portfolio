@@ -1,0 +1,76 @@
+---
+import { education, courses, certifications } from "../data/resume.ts";
+---
+
+<section
+  id="background"
+  aria-label="Formación y certificaciones"
+  class="py-24 px-6"
+>
+  <div class="max-w-4xl mx-auto">
+    <div class="mb-12" data-animate>
+      <h2 class="text-3xl sm:text-4xl font-bold text-text mb-2">Formación</h2>
+      <div class="h-0.5 w-16 bg-accent rounded-full"></div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-[1.2fr_0.8fr] gap-6">
+      <article class="rounded-xl border border-border bg-surface p-6" data-animate>
+        <h3 class="text-lg font-semibold text-text mb-4">Trayectoria académica</h3>
+
+        <div class="space-y-5">
+          {education.map((item) => (
+            <div>
+              <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 mb-1">
+                <p class="text-base font-semibold text-text">{item.degree}</p>
+                <p class="text-xs font-medium text-text-muted">
+                  {item.startYear} — {item.endYear}
+                </p>
+              </div>
+              <p class="text-sm text-accent mb-2">{item.institution}</p>
+
+              {item.details && item.details.length > 0 && (
+                <ul class="space-y-2">
+                  {item.details.map((detail) => (
+                    <li class="text-sm text-text-muted leading-relaxed">{detail}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          ))}
+        </div>
+      </article>
+
+      <div class="space-y-6">
+        <article class="rounded-xl border border-border bg-surface p-6" data-animate>
+          <h3 class="text-lg font-semibold text-text mb-4">Cursos destacados</h3>
+
+          <ul class="space-y-3">
+            {courses.map((course) => (
+              <li>
+                <p class="text-sm font-medium text-text">{course.title}</p>
+                <p class="text-xs text-text-muted">
+                  {[course.provider, course.year].filter(Boolean).join(" · ")}
+                </p>
+              </li>
+            ))}
+          </ul>
+        </article>
+
+        <article class="rounded-xl border border-border bg-surface p-6" data-animate>
+          <h3 class="text-lg font-semibold text-text mb-4">Idiomas y certificaciones</h3>
+
+          <ul class="space-y-3">
+            {certifications.map((item) => (
+              <li>
+                <p class="text-sm font-medium text-text">{item.title}</p>
+                <p class="text-xs text-text-muted">
+                  {[item.issuer, item.note].filter(Boolean).join(" · ")}
+                </p>
+              </li>
+            ))}
+          </ul>
+        </article>
+      </div>
+    </div>
+  </div>
+</section>

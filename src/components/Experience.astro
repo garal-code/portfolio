@@ -1,9 +1,14 @@
 ---
 import { jobs, isCurrentJob } from "../data/resume.ts";
 
-/** Format "YYYY-MM" → "Ene 2022" (Spanish abbreviated month) */
+/** Format "YYYY" / "YYYY-MM" → label in Spanish */
 function formatDate(dateStr: string): string {
-  const [year, month] = dateStr.split("-");
+  const [year, month = "01"] = dateStr.split("-");
+
+  if (!dateStr.includes("-")) {
+    return year;
+  }
+
   const date = new Date(Number(year), Number(month) - 1);
   return date.toLocaleDateString("es-ES", { month: "short", year: "numeric" });
 }
