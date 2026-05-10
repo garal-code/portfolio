@@ -5,74 +5,96 @@ import { personalInfo } from "../data/resume.ts";
 const cleanCodeHref = `${import.meta.env.BASE_URL}clean-code`;
 ---
 
-<section
-  id="hero"
-  aria-label="Presentación"
-  class="min-h-screen flex flex-col items-center justify-center px-6 py-24"
->
-  <div class="max-w-4xl w-full mx-auto text-center" data-animate>
-    <!-- Logo monogram -->
-    <div class="flex justify-center mb-8">
-      <Logo
-        size={64}
-        class="text-accent opacity-90"
-      />
-    </div>
+<section id="hero" aria-label="Presentación" class="relative flex min-h-screen items-center px-6 py-24">
+  <div class="mx-auto grid w-full max-w-6xl gap-12 lg:grid-cols-[1.15fr_0.85fr] lg:items-center">
+    <div class="max-w-3xl" data-animate>
+      <div class="mb-6 flex items-center gap-4">
+        <div class="flex h-16 w-16 items-center justify-center rounded-full border border-amber/30 bg-white/75 shadow-[0_12px_24px_rgba(42,36,32,0.08)]">
+          <Logo size={56} class="text-accent opacity-95" />
+        </div>
+        <span class="eyebrow">Garal · Portfolio</span>
+      </div>
 
-    <!-- Name -->
-    <h1 class="text-5xl sm:text-6xl md:text-7xl font-bold tracking-tight text-text mb-4">
-      {personalInfo.name}
-    </h1>
+      <h1 class="font-display text-balance text-5xl font-bold leading-none text-text sm:text-6xl md:text-7xl">
+        {personalInfo.name}
+      </h1>
 
-    <!-- Title -->
-    <p class="text-xl sm:text-2xl font-medium text-accent mb-6">
-      {personalInfo.title}
-    </p>
+      <p class="font-body mt-5 text-xl italic text-plum sm:text-2xl">
+        Backend engineering con foco en arquitectura mantenible, Clean Code y sistemas que escalan sin volverse frágiles.
+      </p>
 
-    <!-- Tagline / bio snippet -->
-    <p class="text-base sm:text-lg text-text-muted max-w-2xl mx-auto mb-12 leading-relaxed">
-      {personalInfo.summary}
-    </p>
+      <p class="font-body mt-6 max-w-2xl text-lg leading-8 text-umber/95">
+        {personalInfo.summary}
+      </p>
 
-    <!-- CTA buttons -->
-    <div class="flex flex-col sm:flex-row gap-4 justify-center">
-      <a
-        href="#experience"
-        class="inline-flex items-center justify-center gap-2 rounded-lg bg-accent px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
-      >
-        Ver experiencia
-      </a>
-      <a
-        href={personalInfo.links.github}
-        target="_blank"
-        rel="noopener noreferrer"
-        class="inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-surface px-6 py-3 text-sm font-semibold text-text transition-colors hover:border-accent hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
-      >
-        <!-- GitHub icon -->
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="18"
-          height="18"
-          viewBox="0 0 24 24"
-          fill="currentColor"
-          aria-hidden="true"
+      <ul class="mt-8 flex flex-wrap gap-3 text-sm font-medium text-umber">
+        <li class="chip-soft rounded-full px-4 py-2">Spring Boot · APIs · Integraciones complejas</li>
+        <li class="chip-soft rounded-full px-4 py-2">Madrid · España</li>
+        <li class="chip-soft rounded-full px-4 py-2">Código limpio y diseño orientado al cambio</li>
+      </ul>
+
+      <div class="mt-10 flex flex-col gap-4 sm:flex-row sm:flex-wrap">
+        <a
+          href={cleanCodeHref}
+          class="button-primary inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
         >
-          <path
-            d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0 1 12 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"
-          />
-        </svg>
-        GitHub
-      </a>
-      <a
-        href={cleanCodeHref}
-        class="inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-surface px-6 py-3 text-sm font-semibold text-text transition-colors hover:border-accent hover:text-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
-      >
-        Clean Code
-      </a>
+          Explorar Clean Code
+        </a>
+        <a
+          href="#experience"
+          class="button-secondary inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
+        >
+          Ver experiencia
+        </a>
+        <a
+          href={personalInfo.links.github}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="button-secondary inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            aria-hidden="true"
+          >
+            <path
+              d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0 1 12 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"
+            />
+          </svg>
+          GitHub
+        </a>
+      </div>
     </div>
+
+    <aside class="section-panel rounded-[2rem] p-8" data-animate>
+      <span class="eyebrow">Narrativa profesional</span>
+      <h2 class="font-display mt-4 text-3xl font-bold text-text">
+        Construyo software útil, entendible y preparado para evolucionar.
+      </h2>
+      <p class="font-body mt-4 text-base leading-7 text-umber">
+        Trabajo mejor cuando el problema tiene complejidad real: dominios con reglas, integraciones, observabilidad y decisiones de diseño que importan.
+      </p>
+
+      <dl class="mt-8 space-y-5 text-sm">
+        <div class="border-l-2 border-accent/40 pl-4">
+          <dt class="text-xs font-semibold uppercase tracking-[0.2em] text-amber">Actualmente</dt>
+          <dd class="font-body mt-2 text-base text-umber">Impulsando soluciones backend y explorando IA aplicada a inversión y automatización.</dd>
+        </div>
+        <div class="border-l-2 border-plum/30 pl-4">
+          <dt class="text-xs font-semibold uppercase tracking-[0.2em] text-plum">Enfoque</dt>
+          <dd class="font-body mt-2 text-base text-umber">Spring Boot, diseño orientado a responsabilidades claras y sistemas fáciles de operar.</dd>
+        </div>
+        <div class="border-l-2 border-amber/45 pl-4">
+          <dt class="text-xs font-semibold uppercase tracking-[0.2em] text-accent">Prioridad</dt>
+          <dd class="font-body mt-2 text-base text-umber">Menos complejidad accidental, más claridad técnica y decisiones sostenibles.</dd>
+        </div>
+      </dl>
+    </aside>
   </div>
 
-  <!-- Scroll indicator -->
   <div class="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce" aria-hidden="true">
     <svg
       xmlns="http://www.w3.org/2000/svg"

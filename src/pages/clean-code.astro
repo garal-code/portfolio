@@ -1,168 +1,841 @@
 ---
 import Layout from "../layouts/Layout.astro";
-import Logo from "../components/Logo.astro";
-import { personalInfo } from "../data/resume.ts";
+
+const baseUrl = import.meta.env.BASE_URL;
 
 const principles = [
   {
-    key: "S",
+    letter: "S",
     title: "Single Responsibility",
-    summary: "Cada clase hace una sola cosa y la hace bien.",
-    spring: "En Spring, separa orquestación, persistencia, cálculo y notificación en beans distintos.",
+    subtitle: "Una clase, una razón para cambiar",
+    labelLines: ["Single", "Responsibility"],
+    tone: "green",
+    modalBg: "#1f5a49",
+    definition:
+      "Cada clase debe tener una única responsabilidad. Cuando mezclás persistencia, reglas, notificaciones y orquestación en un mismo punto, cualquier cambio termina rompiendo más de lo que debería.",
+    badLabel: "❌ Todo mezclado",
+    badCode:
+      '<span class="kw">public class</span> <span class="cls">UserService</span> {\n  <span class="kw">public</span> User getUser(<span class="kw">long</span> id){...}\n  <span class="kw">public void</span> <span class="fn">sendEmail</span>(User u){\n    <span class="cmt">// lógica de email aquí ❌</span>\n  }\n  <span class="kw">public void</span> <span class="fn">saveToDB</span>(User u){\n    <span class="cmt">// lógica de BD aquí ❌</span>\n  }\n}',
+    goodLabel: "✅ Responsabilidades separadas",
+    goodCode:
+      '<span class="kw">public class</span> <span class="cls">UserService</span> {\n  <span class="kw">private final</span> UserRepository repo;\n  <span class="kw">private final</span> EmailService mail;\n\n  <span class="kw">public</span> User getUser(<span class="kw">long</span> id){\n    <span class="kw">return</span> repo.findById(id);\n  }\n}\n\n<span class="kw">public class</span> <span class="cls">EmailService</span> {\n  <span class="kw">public void</span> <span class="fn">sendWelcome</span>(User user){...}\n}',
+    tip: "<b>Spring Boot:</b> separá <code>@Controller</code>, <code>@Service</code> y <code>@Repository</code>. Cada capa debería tener una única razón de cambio.",
   },
   {
-    key: "O",
+    letter: "O",
     title: "Open / Closed",
-    summary: "Extiende el comportamiento sin reescribir la base.",
-    spring: "Añade nuevas estrategias con nuevas implementaciones de una interfaz, no con if/else infinitos.",
+    subtitle: "Abierto a extensión, cerrado a modificación",
+    labelLines: ["Open", "Closed"],
+    tone: "moss",
+    modalBg: "#365f3f",
+    definition:
+      "El diseño tiene que aceptar nuevas variantes sin reescribir el corazón del caso de uso. Si cada nuevo requisito obliga a tocar la misma clase, la arquitectura ya te está gritando que falta una abstracción.",
+    badLabel: "❌ if/else por cada caso",
+    badCode:
+      '<span class="kw">public class</span> <span class="cls">DiscountService</span> {\n  <span class="kw">public double</span> <span class="fn">calculate</span>(String type, <span class="kw">double</span> price){\n    <span class="kw">if</span>(type.equals(<span class="cls">"VIP"</span>)) <span class="kw">return</span> price * 0.8;\n    <span class="kw">if</span>(type.equals(<span class="cls">"STUDENT"</span>)) <span class="kw">return</span> price * 0.9;\n    <span class="cmt">// nuevo tipo = tocar esta clase ❌</span>\n    <span class="kw">return</span> price;\n  }\n}',
+    goodLabel: "✅ Strategy extensible",
+    goodCode:
+      '<span class="kw">public interface</span> <span class="cls">DiscountStrategy</span> {\n  <span class="kw">double</span> apply(<span class="kw">double</span> price);\n}\n\n<span class="kw">public class</span> <span class="cls">VipDiscount</span> <span class="kw">implements</span> <span class="cls">DiscountStrategy</span> {\n  <span class="kw">public double</span> <span class="fn">apply</span>(<span class="kw">double</span> price){\n    <span class="kw">return</span> price * 0.8;\n  }\n}\n\n<span class="cmt">// nuevo tipo = nueva clase ✅</span>',
+    tip: "<b>Spring Boot:</b> podés inyectar una <code>List&lt;DiscountStrategy&gt;</code> y dejar que el framework descubra todas las implementaciones.",
   },
   {
-    key: "L",
+    letter: "L",
     title: "Liskov Substitution",
-    summary: "Cualquier implementación debe poder sustituir a la abstracción sin romper nada.",
-    spring: "Si un bean implementa tu contrato, el servicio consumidor no debería notar la diferencia.",
+    subtitle: "Los subtipos deben ser sustituibles",
+    labelLines: ["Liskov", "Substitution"],
+    tone: "plum",
+    modalBg: "#6d2d54",
+    definition:
+      "Si un subtipo rompe el contrato esperado por el tipo padre, la herencia deja de ser reutilización y pasa a ser una fuente elegante de bugs. Acá importa el comportamiento, no el árbol de clases.",
+    badLabel: "❌ Herencia que rompe el contrato",
+    badCode:
+      '<span class="kw">public class</span> <span class="cls">Rectangle</span> {\n  <span class="kw">void</span> setWidth(<span class="kw">int</span> width){...}\n  <span class="kw">void</span> setHeight(<span class="kw">int</span> height){...}\n}\n\n<span class="kw">public class</span> <span class="cls">Square</span> <span class="kw">extends</span> <span class="cls">Rectangle</span> {\n  <span class="kw">void</span> setWidth(<span class="kw">int</span> width){\n    <span class="kw">super</span>.setWidth(width);\n    <span class="kw">super</span>.setHeight(width); <span class="cmt">// ❌</span>\n  }\n}',
+    goodLabel: "✅ Contrato explícito",
+    goodCode:
+      '<span class="kw">public interface</span> <span class="cls">Shape</span> { <span class="kw">int</span> area(); }\n\n<span class="kw">public class</span> <span class="cls">Rectangle</span> <span class="kw">implements</span> <span class="cls">Shape</span> {\n  <span class="kw">private int</span> width, height;\n  <span class="kw">public int</span> area(){ <span class="kw">return</span> width * height; }\n}\n\n<span class="kw">public class</span> <span class="cls">Square</span> <span class="kw">implements</span> <span class="cls">Shape</span> {\n  <span class="kw">private int</span> side;\n  <span class="kw">public int</span> area(){ <span class="kw">return</span> side * side; }\n}',
+    tip: "<b>Regla práctica:</b> si al sobreescribir un método cambiás el comportamiento esperado, probablemente necesitás composición o una interfaz más honesta.",
   },
   {
-    key: "I",
+    letter: "I",
     title: "Interface Segregation",
-    summary: "Interfaces pequeñas y enfocadas, no contratos gigantes.",
-    spring: "Divide puertos por caso de uso: persistir, notificar, cobrar. No mezcles todo en una sola interfaz.",
+    subtitle: "Interfaces específicas, no generales",
+    labelLines: ["Interface", "Segregation"],
+    tone: "amber",
+    modalBg: "#8b603b",
+    definition:
+      "No obligues a una implementación a cargar métodos que no necesita. Las interfaces enormes generan acoplamiento innecesario y clases llenas de excepciones o métodos vacíos.",
+    badLabel: "❌ Interfaz dios",
+    badCode:
+      '<span class="kw">public interface</span> <span class="cls">Worker</span> {\n  <span class="kw">void</span> work();\n  <span class="kw">void</span> eat();\n  <span class="kw">void</span> sleep();\n}\n\n<span class="kw">public class</span> <span class="cls">RobotWorker</span> <span class="kw">implements</span> <span class="cls">Worker</span> {\n  <span class="kw">public void</span> eat(){ <span class="kw">throw new</span> UnsupportedOperationException(); }\n  <span class="kw">public void</span> sleep(){ <span class="kw">throw new</span> UnsupportedOperationException(); }\n}',
+    goodLabel: "✅ Interfaces finas",
+    goodCode:
+      '<span class="kw">public interface</span> <span class="cls">Workable</span> { <span class="kw">void</span> work(); }\n<span class="kw">public interface</span> <span class="cls">Eatable</span> { <span class="kw">void</span> eat(); }\n<span class="kw">public interface</span> <span class="cls">Sleepable</span> { <span class="kw">void</span> sleep(); }\n\n<span class="kw">public class</span> <span class="cls">HumanWorker</span> <span class="kw">implements</span> <span class="cls">Workable</span>, <span class="cls">Eatable</span>, <span class="cls">Sleepable</span> { ... }\n<span class="kw">public class</span> <span class="cls">RobotWorker</span> <span class="kw">implements</span> <span class="cls">Workable</span> { ... }',
+    tip: "<b>Spring Data:</b> la familia <code>CrudRepository</code>, <code>PagingAndSortingRepository</code> y <code>JpaRepository</code> es un buen ejemplo de segregación por necesidad real.",
   },
   {
-    key: "D",
+    letter: "D",
     title: "Dependency Inversion",
-    summary: "Los servicios dependen de abstracciones, no de detalles concretos.",
-    spring: "Inyecta interfaces por constructor y deja que Spring resuelva las implementaciones.",
+    subtitle: "Dependé de abstracciones, no de concretos",
+    labelLines: ["Dependency", "Inversion"],
+    tone: "umber",
+    modalBg: "#4c3a2d",
+    definition:
+      "Los casos de uso de alto nivel no deberían conocer detalles de infraestructura. Cuando dependés de interfaces, el cambio de implementación deja de contaminar tu lógica de negocio.",
+    badLabel: "❌ Acoplado a implementación",
+    badCode:
+      '<span class="kw">public class</span> <span class="cls">OrderService</span> {\n  <span class="cmt">// Acoplado a MySQL ❌</span>\n  <span class="kw">private</span> MySQLRepo repo = <span class="kw">new</span> <span class="cls">MySQLRepo</span>();\n\n  <span class="kw">public void</span> save(Order order){\n    repo.save(order);\n  }\n}',
+    goodLabel: "✅ Inyección por constructor",
+    goodCode:
+      '<span class="ann">@Service</span>\n<span class="kw">public class</span> <span class="cls">OrderService</span> {\n  <span class="kw">private final</span> OrderRepository repo;\n\n  <span class="kw">public</span> <span class="fn">OrderService</span>(OrderRepository repo){\n    <span class="kw">this</span>.repo = repo;\n  }\n\n  <span class="kw">public void</span> save(Order order){\n    repo.save(order);\n  }\n}',
+    tip: "<b>Spring Boot:</b> con un único constructor la inyección ya es implícita. Queda más claro, más testeable y menos acoplado a infraestructura concreta.",
   },
 ];
 
-const codeExample = `@Service
-public class CheckoutService {
-  private final OrderRepository orderRepository;
-  private final PaymentProcessor paymentProcessor;
-  private final NotificationPort notificationPort;
+const graphNodes = [
+  { index: 0, top: "8%", left: "50%" },
+  { index: 1, top: "27%", left: "82%" },
+  { index: 2, top: "69%", left: "72%" },
+  { index: 3, top: "69%", left: "28%" },
+  { index: 4, top: "27%", left: "18%" },
+].map((node) => ({ ...node, ...principles[node.index] }));
 
-  public CheckoutService(
-      OrderRepository orderRepository,
-      PaymentProcessor paymentProcessor,
-      NotificationPort notificationPort
-  ) {
-    this.orderRepository = orderRepository;
-    this.paymentProcessor = paymentProcessor;
-    this.notificationPort = notificationPort;
-  }
-
-  public Order checkout(Order order) {
-    order.validate();
-    paymentProcessor.process(order);
-
-    Order saved = orderRepository.save(order);
-    notificationPort.notifyOrderCreated(saved);
-    return saved;
-  }
-}
-
-public interface PaymentProcessor {
-  void process(Order order);
-}
-
-@Component
-public class StripePaymentProcessor implements PaymentProcessor {
-  @Override
-  public void process(Order order) {
-    // Integración con Stripe
-  }
-}`;
 ---
 
 <Layout
-  title="Clean Code — SOLID en Spring"
-  description="Mapa práctico de los principios SOLID con un ejemplo real de implementación en Spring Boot."
+  title="Clean Code"
+  description="Mapa interactivo de principios SOLID con ejemplos reales de Java y Spring Boot dentro del portfolio de Garal."
 >
-  <section class="min-h-screen px-6 py-16">
-    <div class="max-w-5xl mx-auto space-y-16">
-      <header class="space-y-8" data-animate>
-        <div class="flex items-center gap-4">
-          <Logo size={54} class="text-accent" />
-          <div>
-            <p class="text-sm uppercase tracking-[0.3em] text-text-muted">Clean Code</p>
-            <h1 class="text-4xl sm:text-5xl font-bold text-text">SOLID en Spring</h1>
-          </div>
-        </div>
+  <div class="solid-page">
+    <div class="solid-shell">
+      <a class="solid-back" href={baseUrl}>← Volver al portfolio</a>
 
-        <p class="max-w-3xl text-lg text-text-muted leading-relaxed">
-          Un mapa rápido para escribir backend mantenible: entender el principio, ver el olor que evita y aterrizarlo en Spring Boot con inyección de dependencias y contratos pequeños.
+      <header class="solid-banner" data-animate>
+        <div class="tag">Garal · Clean Code</div>
+        <h1>Principios <em>SOLID</em></h1>
+        <p>
+          Un mapa visual para explicar decisiones de diseño que hacen el código más estable,
+          más mantenible y mucho menos frágil cuando el producto cambia.
         </p>
-
-        <div class="flex flex-wrap gap-3">
-          <a
-            href={`${import.meta.env.BASE_URL}`}
-            class="inline-flex items-center justify-center rounded-lg border border-border bg-surface px-5 py-3 text-sm font-semibold text-text transition-colors hover:border-accent hover:text-accent"
-          >
-            Volver al portfolio
-          </a>
-          <a
-            href="#example"
-            class="inline-flex items-center justify-center rounded-lg bg-accent px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-accent-hover"
-          >
-            Ver ejemplo en Spring
-          </a>
-        </div>
       </header>
 
-      <section class="space-y-6" data-animate>
-        <div>
-          <p class="text-sm font-semibold uppercase tracking-[0.25em] text-accent">Mapa mental</p>
-          <h2 class="mt-2 text-2xl sm:text-3xl font-bold text-text">Principios SOLID</h2>
-        </div>
+        <div class="solid-graph" aria-label="Mapa interactivo de principios SOLID">
+          <div class="orbit orbit-one"></div>
+          <div class="orbit orbit-two"></div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {principles.map((item) => (
-            <article class="rounded-xl border border-border bg-surface p-6">
-              <div class="flex items-start gap-4">
-                <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-lg font-bold text-accent">
-                  {item.key}
-                </div>
-                <div class="space-y-2">
-                  <h3 class="text-lg font-semibold text-text">{item.title}</h3>
-                  <p class="text-sm text-text-muted leading-relaxed">{item.summary}</p>
-                  <p class="text-sm text-text-muted leading-relaxed">
-                    <span class="font-semibold text-text">Spring:</span> {item.spring}
-                  </p>
-                </div>
-              </div>
-            </article>
+          <span class="solid-edge edge-top" aria-hidden="true"></span>
+          <span class="solid-edge edge-right" aria-hidden="true"></span>
+          <span class="solid-edge edge-bottom-right" aria-hidden="true"></span>
+          <span class="solid-edge edge-bottom-left" aria-hidden="true"></span>
+          <span class="solid-edge edge-left" aria-hidden="true"></span>
+
+          <div class="solid-center" aria-hidden="true">
+            <span class="solid-center-title">SOLID</span>
+            <span class="solid-center-subtitle">PRINCIPIOS</span>
+          </div>
+
+          {graphNodes.map((node) => (
+            <button
+              type="button"
+              class={`solid-node tone-${node.tone}`}
+              style={`top:${node.top};left:${node.left};`}
+              data-solid-open={node.index}
+              aria-label={`Abrir detalle de ${node.title}`}
+            >
+              <span class="node-letter">{node.letter}</span>
+              <span class="node-copy">
+                {node.labelLines.map((line) => (
+                  <span>{line}</span>
+                ))}
+              </span>
+            </button>
           ))}
         </div>
-      </section>
-
-      <section id="example" class="grid grid-cols-1 lg:grid-cols-[0.95fr_1.05fr] gap-6" data-animate>
-        <article class="rounded-xl border border-border bg-surface p-6 space-y-4">
-          <p class="text-sm font-semibold uppercase tracking-[0.25em] text-accent">Ejemplo</p>
-          <h2 class="text-2xl font-bold text-text">Checkout en Spring Boot</h2>
-          <p class="text-sm text-text-muted leading-relaxed">
-            El servicio orquesta el flujo, pero no conoce detalles de Stripe, email o base de datos. Eso permite cambiar implementaciones sin tocar la lógica principal.
-          </p>
-
-          <ul class="space-y-3 text-sm text-text-muted">
-            <li><span class="font-semibold text-text">S:</span> el servicio solo coordina el checkout.</li>
-            <li><span class="font-semibold text-text">O:</span> puedes sumar otro procesador de pago sin rehacer el servicio.</li>
-            <li><span class="font-semibold text-text">L:</span> cualquier `PaymentProcessor` válido sustituye a otro.</li>
-            <li><span class="font-semibold text-text">I:</span> cada puerto expone solo lo que necesita.</li>
-            <li><span class="font-semibold text-text">D:</span> Spring inyecta interfaces, no detalles.</li>
-          </ul>
-        </article>
-
-        <pre class="overflow-x-auto rounded-xl border border-border bg-bg p-6 text-sm leading-relaxed text-text-muted"><code>{codeExample}</code></pre>
-      </section>
-
-      <section class="rounded-xl border border-border bg-surface p-6" data-animate>
-        <h2 class="text-2xl font-bold text-text mb-4">Idea clave</h2>
-        <p class="text-base text-text-muted leading-relaxed max-w-3xl">
-          Clean Code no es decorar clases: es reducir fricción para cambiar el sistema mañana. En un backend Spring bien armado, eso se traduce en servicios pequeños, contratos claros y dependencias invertidas.
-        </p>
-        <p class="mt-4 text-sm font-medium text-accent">{personalInfo.name}</p>
-      </section>
     </div>
-  </section>
+  </div>
+
+  <div class="ov" id="ov" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="mt1">
+      <div class="mh">
+        <div class="ml" id="ml"></div>
+        <div class="mt">
+          <h2 id="mt1"></h2>
+          <p id="mt2"></p>
+        </div>
+        <button class="mx" id="mx" type="button" aria-label="Cerrar modal">✕</button>
+      </div>
+      <div class="mb">
+        <p class="def" id="mdef"></p>
+        <div class="cmp">
+          <div class="cb bad">
+            <div class="ch"><span class="cd"></span><span id="mbl"></span></div>
+            <pre id="mbc"></pre>
+          </div>
+          <div class="cb good">
+            <div class="ch"><span class="cd"></span><span id="mgl"></span></div>
+            <pre id="mgc"></pre>
+          </div>
+        </div>
+        <div class="tip">💡 <span id="mtip"></span></div>
+      </div>
+    </div>
+  </div>
+
+  <script type="application/json" id="solid-principles" set:html={JSON.stringify(principles)}></script>
+
+  <script>
+    const rawData = document.getElementById("solid-principles");
+    const DATA = rawData ? JSON.parse(rawData.textContent ?? "[]") : [];
+
+    const overlay = document.getElementById("ov");
+    const closeButton = document.getElementById("mx");
+    const letterEl = document.getElementById("ml");
+    const titleEl = document.getElementById("mt1");
+    const subtitleEl = document.getElementById("mt2");
+    const definitionEl = document.getElementById("mdef");
+    const badLabelEl = document.getElementById("mbl");
+    const badCodeEl = document.getElementById("mbc");
+    const goodLabelEl = document.getElementById("mgl");
+    const goodCodeEl = document.getElementById("mgc");
+    const tipEl = document.getElementById("mtip");
+
+    const closeModal = () => {
+      overlay?.classList.remove("on");
+      overlay?.setAttribute("aria-hidden", "true");
+      document.body.style.overflow = "";
+    };
+
+    const openModal = (index) => {
+      const item = DATA[index];
+      if (!item || !overlay || !letterEl || !titleEl || !subtitleEl || !definitionEl || !badLabelEl || !badCodeEl || !goodLabelEl || !goodCodeEl || !tipEl) {
+        return;
+      }
+
+      letterEl.textContent = item.letter;
+      letterEl.style.background = item.modalBg;
+      titleEl.textContent = item.title;
+      subtitleEl.textContent = item.subtitle;
+      definitionEl.textContent = item.definition;
+      badLabelEl.textContent = item.badLabel;
+      badCodeEl.innerHTML = item.badCode;
+      goodLabelEl.textContent = item.goodLabel;
+      goodCodeEl.innerHTML = item.goodCode;
+      tipEl.innerHTML = item.tip;
+      overlay.classList.add("on");
+      overlay.setAttribute("aria-hidden", "false");
+      document.body.style.overflow = "hidden";
+    };
+
+    document.querySelectorAll("[data-solid-open]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const index = Number(button.getAttribute("data-solid-open"));
+        openModal(index);
+      });
+    });
+
+    closeButton?.addEventListener("click", closeModal);
+    overlay?.addEventListener("click", (event) => {
+      if (event.target === overlay) {
+        closeModal();
+      }
+    });
+
+    window.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        closeModal();
+      }
+    });
+  </script>
+
+  <style>
+    .solid-page {
+      background: linear-gradient(160deg, #221e1a 0%, #2a2018 42%, #1a2e28 100%);
+      min-height: 100vh;
+      padding: 2rem 1rem 3rem;
+    }
+
+    .solid-shell {
+      margin: 0 auto;
+      max-width: 1120px;
+    }
+
+    .solid-back {
+      align-items: center;
+      background: rgba(247, 243, 238, 0.08);
+      border: 1px solid rgba(247, 243, 238, 0.14);
+      border-radius: 999px;
+      color: #f7f3ee;
+      display: inline-flex;
+      font-size: 0.82rem;
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+      padding: 0.72rem 1rem;
+      text-decoration: none;
+    }
+
+    .solid-back:hover {
+      background: rgba(247, 243, 238, 0.14);
+      transform: translateY(-1px);
+    }
+
+    .solid-banner {
+      margin: 0 auto 1.75rem;
+      max-width: 44rem;
+      text-align: center;
+    }
+
+    .solid-banner .tag {
+      background: rgba(196, 149, 106, 0.12);
+      border: 1px solid rgba(196, 149, 106, 0.32);
+      border-radius: 999px;
+      color: #c4956a;
+      display: inline-block;
+      font-size: 0.64rem;
+      font-weight: 700;
+      letter-spacing: 0.22em;
+      margin-bottom: 0.9rem;
+      padding: 0.3rem 0.9rem;
+      text-transform: uppercase;
+    }
+
+    .solid-banner h1 {
+      color: #f7f3ee;
+      font-family: "Playfair Display", serif;
+      font-size: clamp(2.25rem, 6vw, 4.4rem);
+      font-weight: 700;
+      line-height: 1.04;
+      margin: 0;
+    }
+
+    .solid-banner h1 em {
+      color: #2d6a5a;
+      font-style: italic;
+    }
+
+    .solid-banner p {
+      color: #a09080;
+      font-family: "Lora", serif;
+      font-size: 1.05rem;
+      font-style: italic;
+      line-height: 1.8;
+      margin: 1rem auto 0;
+      max-width: 38rem;
+    }
+
+    .solid-stage {
+      background: rgba(247, 243, 238, 0.06);
+      border-color: rgba(247, 243, 238, 0.08);
+      border-radius: 2rem;
+      margin: 0 auto;
+      max-width: 64rem;
+      padding: 2rem 1rem 1.5rem;
+    }
+
+    .solid-graph {
+      aspect-ratio: 1 / 1;
+      margin: 0 auto;
+      max-width: 34rem;
+      position: relative;
+      width: min(100%, 34rem);
+    }
+
+    .orbit {
+      border: 1px solid rgba(45, 106, 90, 0.22);
+      border-radius: 999px;
+      left: 50%;
+      position: absolute;
+      top: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    .orbit-one {
+      animation: pulse 4s ease-in-out infinite;
+      height: 34%;
+      width: 34%;
+    }
+
+    .orbit-two {
+      animation: pulse 4s ease-in-out infinite 0.9s;
+      height: 52%;
+      width: 52%;
+    }
+
+    .solid-edge {
+      background: linear-gradient(90deg, rgba(45, 106, 90, 0.08), rgba(196, 149, 106, 0.55), rgba(45, 106, 90, 0.08));
+      height: 2px;
+      left: 50%;
+      position: absolute;
+      top: 50%;
+      transform-origin: left center;
+      width: 32%;
+    }
+
+    .edge-top { transform: translateY(-50%) rotate(-90deg); }
+    .edge-right { transform: translateY(-50%) rotate(-22deg); }
+    .edge-bottom-right { transform: translateY(-50%) rotate(42deg); }
+    .edge-bottom-left { transform: translateY(-50%) rotate(138deg); }
+    .edge-left { transform: translateY(-50%) rotate(202deg); }
+
+    .solid-center {
+      align-items: center;
+      background: radial-gradient(circle at 35% 30%, #2d6a5a 0%, #1a3028 100%);
+      border: 1.5px solid rgba(196, 149, 106, 0.5);
+      border-radius: 999px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.22);
+      color: #f7f3ee;
+      display: flex;
+      flex-direction: column;
+      height: 8.75rem;
+      inset: 50% auto auto 50%;
+      justify-content: center;
+      position: absolute;
+      transform: translate(-50%, -50%);
+      width: 8.75rem;
+      z-index: 2;
+    }
+
+    .solid-center-title {
+      font-family: "Playfair Display", serif;
+      font-size: 1.9rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+    }
+
+    .solid-center-subtitle {
+      color: rgba(196, 149, 106, 0.84);
+      font-size: 0.6rem;
+      font-weight: 700;
+      letter-spacing: 0.3em;
+      margin-top: 0.3rem;
+    }
+
+    .solid-node {
+      align-items: center;
+      background: transparent;
+      border: 0;
+      color: #f7f3ee;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      gap: 0.48rem;
+      position: absolute;
+      transform: translate(-50%, -50%);
+      width: 8.5rem;
+      z-index: 3;
+    }
+
+    .solid-node::before,
+    .solid-node::after {
+      border-radius: 999px;
+      content: "";
+      inset: 0;
+      position: absolute;
+    }
+
+    .solid-node::before {
+      filter: blur(14px);
+      opacity: 0.18;
+      transform: scale(1.08);
+      z-index: -2;
+    }
+
+    .solid-node::after {
+      background: rgba(247, 243, 238, 0.04);
+      border: 1px solid rgba(247, 243, 238, 0.18);
+      border-radius: 999px;
+      content: "";
+      height: 4.9rem;
+      left: 50%;
+      opacity: 0;
+      top: 0.15rem;
+      transform: translateX(-50%) scale(0.9);
+      transition: opacity 180ms ease, transform 180ms ease;
+      width: 4.9rem;
+      z-index: -1;
+    }
+
+    .solid-node:hover::after,
+    .solid-node:focus-visible::after {
+      opacity: 1;
+      transform: translateX(-50%) scale(1.06);
+    }
+
+    .solid-node:hover .node-letter,
+    .solid-node:focus-visible .node-letter {
+      transform: translateY(-2px) scale(1.03);
+    }
+
+    .solid-node:focus-visible {
+      outline: none;
+    }
+
+    .node-letter {
+      align-items: center;
+      border: 1.5px solid rgba(247, 243, 238, 0.34);
+      border-radius: 999px;
+      box-shadow: 0 18px 36px rgba(0, 0, 0, 0.25);
+      display: flex;
+      font-family: "Playfair Display", serif;
+      font-size: 1.5rem;
+      font-weight: 700;
+      height: 4.55rem;
+      justify-content: center;
+      transition: transform 180ms ease;
+      width: 4.55rem;
+    }
+
+    .node-copy {
+      align-items: center;
+      color: rgba(247, 243, 238, 0.85);
+      display: flex;
+      flex-direction: column;
+      font-size: 0.7rem;
+      font-weight: 600;
+      gap: 0.05rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .tone-green .node-letter {
+      background: radial-gradient(circle at 35% 30%, #3d8c75 0%, #1a4038 100%);
+    }
+
+    .tone-green::before { background: #3d8c75; }
+
+    .tone-moss .node-letter {
+      background: radial-gradient(circle at 35% 30%, #5a8a5a 0%, #2a4a2a 100%);
+    }
+
+    .tone-moss::before { background: #5a8a5a; }
+
+    .tone-plum .node-letter {
+      background: radial-gradient(circle at 35% 30%, #a04a80 0%, #5a1a48 100%);
+    }
+
+    .tone-plum::before { background: #a04a80; }
+
+    .tone-amber .node-letter {
+      background: radial-gradient(circle at 35% 30%, #c4956a 0%, #8a5a30 100%);
+    }
+
+    .tone-amber::before { background: #c4956a; }
+
+    .tone-umber .node-letter {
+      background: radial-gradient(circle at 35% 30%, #8a7060 0%, #4a3828 100%);
+    }
+
+    .tone-umber::before { background: #8a7060; }
+
+    .solid-hint {
+      color: rgba(196, 149, 106, 0.72);
+      font-family: "Lora", serif;
+      font-size: 0.98rem;
+      font-style: italic;
+      margin: 1rem auto 0;
+      text-align: center;
+    }
+
+    .solid-support-grid {
+      display: grid;
+      gap: 1rem;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      margin-top: 1.5rem;
+    }
+
+    .solid-support-card {
+      background: rgba(247, 243, 238, 0.07);
+      border: 1px solid rgba(247, 243, 238, 0.08);
+      border-radius: 1.5rem;
+      color: #f7f3ee;
+      padding: 1.4rem;
+    }
+
+    .support-label {
+      color: #c4956a;
+      display: inline-block;
+      font-size: 0.64rem;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      margin-bottom: 0.7rem;
+      text-transform: uppercase;
+    }
+
+    .solid-support-card h2 {
+      font-family: "Playfair Display", serif;
+      font-size: 1.45rem;
+      margin: 0;
+    }
+
+    .solid-support-card p {
+      color: rgba(247, 243, 238, 0.72);
+      font-family: "Lora", serif;
+      line-height: 1.8;
+      margin: 0.75rem 0 0;
+    }
+
+    .accent-1 { box-shadow: inset 0 1px 0 rgba(45, 106, 90, 0.3); }
+    .accent-2 { box-shadow: inset 0 1px 0 rgba(138, 58, 106, 0.3); }
+    .accent-3 { box-shadow: inset 0 1px 0 rgba(196, 149, 106, 0.35); }
+
+    .ov {
+      align-items: center;
+      background: rgba(34, 30, 26, 0.82);
+      display: flex;
+      inset: 0;
+      justify-content: center;
+      opacity: 0;
+      padding: 1rem;
+      pointer-events: none;
+      position: fixed;
+      transition: opacity 0.22s ease;
+      z-index: 999;
+    }
+
+    .ov.on {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .modal {
+      background: #f7f3ee;
+      border: 1.5px solid #2d6a5a;
+      border-radius: 1rem;
+      max-height: 88vh;
+      max-width: 36rem;
+      overflow-y: auto;
+      transform: translateY(14px) scale(0.96);
+      transition: transform 0.24s ease;
+      width: 100%;
+    }
+
+    .ov.on .modal {
+      transform: none;
+    }
+
+    .mh {
+      align-items: center;
+      background: #f7f3ee;
+      border-bottom: 1px solid #ece7e1;
+      border-radius: 1rem 1rem 0 0;
+      display: flex;
+      gap: 0.75rem;
+      padding: 0.95rem 1.1rem;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
+    .ml {
+      align-items: center;
+      border-radius: 999px;
+      color: #fff;
+      display: flex;
+      flex-shrink: 0;
+      font-family: "Playfair Display", serif;
+      font-size: 1.3rem;
+      font-weight: 700;
+      height: 2.75rem;
+      justify-content: center;
+      width: 2.75rem;
+    }
+
+    .mt h2 {
+      color: #221e1a;
+      font-family: "Playfair Display", serif;
+      font-size: 1rem;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .mt p {
+      color: #a09080;
+      font-family: "Lora", serif;
+      font-size: 0.78rem;
+      font-style: italic;
+      margin: 0.2rem 0 0;
+    }
+
+    .mx {
+      align-items: center;
+      background: #fff;
+      border: 1px solid #ece7e1;
+      border-radius: 999px;
+      color: #a09080;
+      cursor: pointer;
+      display: flex;
+      font-size: 0.9rem;
+      height: 1.9rem;
+      justify-content: center;
+      margin-left: auto;
+      width: 1.9rem;
+    }
+
+    .mx:hover {
+      background: #ece7e1;
+      color: #221e1a;
+    }
+
+    .mb {
+      padding: 1rem 1.1rem 1.25rem;
+    }
+
+    .def {
+      border-left: 2.5px solid #2d6a5a;
+      color: #6a5a4a;
+      font-family: "Lora", serif;
+      font-size: 0.94rem;
+      line-height: 1.8;
+      margin-bottom: 1rem;
+      padding-left: 0.8rem;
+    }
+
+    .cmp {
+      display: grid;
+      gap: 0.55rem;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .cb {
+      border: 1px solid #ece7e1;
+      border-radius: 0.7rem;
+      overflow: hidden;
+    }
+
+    .ch {
+      align-items: center;
+      display: flex;
+      font-size: 0.62rem;
+      font-weight: 700;
+      gap: 0.35rem;
+      letter-spacing: 0.08em;
+      padding: 0.5rem 0.7rem;
+      text-transform: uppercase;
+    }
+
+    .cb.bad .ch {
+      background: rgba(185, 28, 28, 0.07);
+      border-bottom: 1px solid rgba(185, 28, 28, 0.12);
+      color: #b91c1c;
+    }
+
+    .cb.good .ch {
+      background: rgba(45, 106, 90, 0.08);
+      border-bottom: 1px solid rgba(45, 106, 90, 0.15);
+      color: #2d6a5a;
+    }
+
+    .cd {
+      border-radius: 999px;
+      flex-shrink: 0;
+      height: 0.35rem;
+      width: 0.35rem;
+    }
+
+    .cb.bad .cd { background: #b91c1c; }
+    .cb.good .cd { background: #2d6a5a; }
+
+    pre {
+      background: #221e1a;
+      color: #f7f3ee;
+      font-family: "DM Sans", sans-serif;
+      font-size: 0.72rem;
+      line-height: 1.7;
+      margin: 0;
+      overflow-x: auto;
+      padding: 0.9rem;
+    }
+
+    .kw { color: #4a9a6a; }
+    .cls { color: #c4956a; }
+    .fn { color: #5abf8a; }
+    .cmt { color: #8b7a69; font-style: italic; }
+    .ann { color: #a06090; }
+    .cb.bad .kw,
+    .cb.bad .cls { color: #f87171; }
+
+    .tip {
+      background: rgba(45, 106, 90, 0.07);
+      border: 1px solid rgba(45, 106, 90, 0.18);
+      border-radius: 0.75rem;
+      color: #6a5a4a;
+      display: flex;
+      font-family: "Lora", serif;
+      font-size: 0.92rem;
+      gap: 0.5rem;
+      line-height: 1.7;
+      margin-top: 0.9rem;
+      padding: 0.8rem 0.9rem;
+    }
+
+    .tip b {
+      color: #2d6a5a;
+      font-family: "DM Sans", sans-serif;
+    }
+
+    .tip code {
+      background: rgba(34, 30, 26, 0.06);
+      border-radius: 0.35rem;
+      font-family: "DM Sans", sans-serif;
+      font-size: 0.84em;
+      padding: 0.05rem 0.28rem;
+    }
+
+    @keyframes pulse {
+      0%,
+      100% {
+        opacity: 0.12;
+        transform: translate(-50%, -50%) scale(1);
+      }
+      50% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(1.18);
+      }
+    }
+
+    @media (max-width: 900px) {
+      .solid-support-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .solid-page {
+        padding-inline: 0.75rem;
+      }
+
+      .solid-stage {
+        padding-inline: 0.65rem;
+      }
+
+      .solid-graph {
+        max-width: 21rem;
+      }
+
+      .solid-center {
+        height: 6.65rem;
+        width: 6.65rem;
+      }
+
+      .solid-center-title {
+        font-size: 1.45rem;
+      }
+
+      .solid-node {
+        width: 6.6rem;
+      }
+
+      .node-letter {
+        font-size: 1.15rem;
+        height: 3.55rem;
+        width: 3.55rem;
+      }
+
+      .node-copy {
+        font-size: 0.56rem;
+      }
+
+      .cmp {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
 </Layout>

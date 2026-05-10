@@ -11,20 +11,18 @@ const { title, description } = Astro.props;
 ---
 
 <!doctype html>
-<html lang="es" class="dark">
+<html lang="es">
   <head>
     <Head title={title} description={description} />
   </head>
-  <body class="bg-bg text-text min-h-screen font-sans antialiased">
-    <main>
+  <body class="min-h-screen bg-bg font-sans text-text antialiased">
+    <main class="relative isolate overflow-hidden">
       <slot />
     </main>
 
     <script>
-      // IntersectionObserver for scroll animations
-      // Respects prefers-reduced-motion
       const prefersReducedMotion = window.matchMedia(
-        "(prefers-reduced-motion: reduce)"
+        "(prefers-reduced-motion: reduce)",
       ).matches;
 
       if (!prefersReducedMotion) {
@@ -40,12 +38,15 @@ const { title, description } = Astro.props;
           {
             threshold: 0.1,
             rootMargin: "0px 0px -50px 0px",
-          }
+          },
         );
 
-        // Observe elements with data-animate attribute
         document.querySelectorAll("[data-animate]").forEach((el) => {
           observer.observe(el);
+        });
+      } else {
+        document.querySelectorAll("[data-animate]").forEach((el) => {
+          el.classList.add("animate-in");
         });
       }
     </script>

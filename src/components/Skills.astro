@@ -5,7 +5,6 @@ import type { SkillCategory } from "../data/resume.ts";
 const grouped = getSkillsByCategory();
 const categories: SkillCategory[] = ["backend", "frontend", "devops", "tools"];
 
-// Category icons (inline SVG paths)
 const categoryIcons: Record<SkillCategory, string> = {
   backend: "M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10",
   frontend: "M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z",
@@ -14,32 +13,23 @@ const categoryIcons: Record<SkillCategory, string> = {
 };
 ---
 
-<section
-  id="skills"
-  aria-label="Habilidades técnicas"
-  class="py-24 px-6"
->
-  <div class="max-w-4xl mx-auto">
-    <!-- Heading -->
+<section id="skills" aria-label="Habilidades técnicas" class="px-6 py-24">
+  <div class="mx-auto max-w-5xl">
     <div class="mb-12" data-animate>
-      <h2 class="text-3xl sm:text-4xl font-bold text-text mb-2">Habilidades</h2>
-      <div class="h-0.5 w-16 bg-accent rounded-full"></div>
+      <span class="eyebrow">Stack</span>
+      <h2 class="font-display mt-3 text-3xl font-bold text-text sm:text-4xl">Habilidades</h2>
     </div>
 
-    <!-- Categories grid -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
       {
         categories.map((category) => {
           const categorySkills = grouped[category];
           if (!categorySkills || categorySkills.length === 0) return null;
+
           return (
-            <div
-              class="rounded-xl border border-border bg-surface p-6"
-              data-animate
-            >
-              <!-- Category header -->
-              <div class="flex items-center gap-3 mb-4">
-                <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-accent/10">
+            <div class="section-panel rounded-[1.75rem] p-6" data-animate>
+              <div class="mb-4 flex items-center gap-3">
+                <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-soft-green">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     width="16"
@@ -56,16 +46,15 @@ const categoryIcons: Record<SkillCategory, string> = {
                     <path d={categoryIcons[category]} />
                   </svg>
                 </div>
-                <h3 class="text-sm font-semibold uppercase tracking-wider text-text-muted">
+                <h3 class="text-sm font-semibold uppercase tracking-[0.18em] text-text-muted">
                   {getCategoryLabel(category)}
                 </h3>
               </div>
 
-              <!-- Skill badges -->
               <ul class="flex flex-wrap gap-2" aria-label={`Habilidades de ${getCategoryLabel(category)}`}>
                 {categorySkills.map((skill) => (
                   <li>
-                    <span class="inline-block rounded-md border border-border bg-bg px-3 py-1 text-xs font-medium text-text transition-colors hover:border-accent/50 hover:text-accent">
+                    <span class="inline-block rounded-full border border-border bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-umber transition-colors hover:border-plum/35 hover:text-plum">
                       {skill.name}
                     </span>
                   </li>
