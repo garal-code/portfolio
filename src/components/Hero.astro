@@ -2,7 +2,7 @@
 import Logo from "./Logo.astro";
 import { personalInfo } from "../data/resume.ts";
 
-const cleanCodeHref = `${import.meta.env.BASE_URL}clean-code`;
+const cleanCodeHref = `${import.meta.env.BASE_URL.replace(/\/?$/, "/")}clean-code`;
 ---
 
 <section id="hero" aria-label="Presentación" class="relative flex min-h-screen items-center px-6 py-24">
