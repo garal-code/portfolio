@@ -1,0 +1,136 @@
+---
+import { jobs, education, skills, isCurrentJob } from "../data/resume.ts";
+
+const tabs = [
+  { id: "exp", label: "Experiencia" },
+  { id: "form", label: "Formación" },
+  { id: "stack", label: "Stack" },
+] as const;
+---
+
+<section id="trayectoria" aria-label="Trayectoria" class="flex flex-col gap-8 px-6 py-16 md:px-16">
+  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between" data-animate>
+    <h2 class="font-display text-[44px] font-extrabold tracking-[-0.02em] text-ink">Trayectoria</h2>
+
+    <div role="tablist" aria-label="Secciones de trayectoria" class="flex gap-1.5 rounded-full bg-sand p-1.5">
+      {
+        tabs.map((tab, index) => (
+          <button
+            type="button"
+            role="tab"
+            id={`tab-${tab.id}`}
+            data-tab={tab.id}
+            aria-selected={index === 0 ? "true" : "false"}
+            aria-controls={`panel-${tab.id}`}
+            class="journey-tab rounded-full px-5 py-2.5 text-sm font-semibold text-body transition-colors aria-selected:bg-forest aria-selected:text-cream"
+          >
+            {tab.label}
+          </button>
+        ))
+      }
+    </div>
+  </div>
+
+  <div
+    id="panel-exp"
+    role="tabpanel"
+    aria-labelledby="tab-exp"
+    data-panel="exp"
+    class="grid gap-4 md:grid-cols-2"
+    data-animate
+  >
+    {
+      jobs.map((job) => (
+        <article class="flex flex-col gap-2.5 rounded-2xl bg-white p-6">
+          <div class="flex flex-wrap items-baseline justify-between gap-2">
+            <h3 class="font-display text-[22px] font-bold text-ink">{job.company}</h3>
+            <div class="flex items-center gap-2">
+              <span class="text-sm font-semibold text-sage-dark">
+                {job.startDate} — {isCurrentJob(job) ? "hoy" : job.endDate}
+              </span>
+              {isCurrentJob(job) && (
+                <span class="rounded-full bg-forest px-2.5 py-1 text-xs font-bold text-cream">Actual</span>
+              )}
+            </div>
+          </div>
+          <p class="text-[15px] leading-[1.55] text-body">{job.summary}</p>
+          <p class="text-[13px] text-meta">{job.technologies.join(" · ")}</p>
+        </article>
+      ))
+    }
+  </div>
+
+  <div
+    id="panel-form"
+    role="tabpanel"
+    aria-labelledby="tab-form"
+    data-panel="form"
+    class="grid gap-4 md:grid-cols-3"
+    hidden
+    data-animate
+  >
+    {
+      education.map((item) => (
+        <article class="flex flex-col gap-2 rounded-2xl bg-white p-6">
+          <span class="text-sm font-semibold text-sage-dark">
+            {item.endYear ? `${item.startYear} — ${item.endYear}` : item.startYear}
+          </span>
+          <h3 class="font-display text-[22px] font-bold text-ink">{item.degree}</h3>
+          <p class="text-[15px] text-body">{item.details?.[0]}</p>
+        </article>
+      ))
+    }
+    <article class="flex flex-col gap-2 rounded-2xl bg-white p-6">
+      <span class="text-sm font-semibold text-sage-dark">Cursos e idiomas</span>
+      <p class="text-[15px] text-body">
+        Spring Framework 5, Flutter y Android (Udemy). Inglés B2, British Council.
+      </p>
+    </article>
+  </div>
+
+  <div
+    id="panel-stack"
+    role="tabpanel"
+    aria-labelledby="tab-stack"
+    data-panel="stack"
+    class="flex flex-wrap gap-2.5"
+    hidden
+    data-animate
+  >
+    {
+      skills.map((skill) => (
+        <span class="rounded-full bg-white px-[18px] py-2.5 text-[15px] font-semibold text-ink">{skill}</span>
+      ))
+    }
+  </div>
+
+  <noscript>
+    <style>
+      #panel-form[hidden] {
+        display: grid !important;
+      }
+      #panel-stack[hidden] {
+        display: flex !important;
+      }
+    </style>
+  </noscript>
+</section>
+
+<script>
+  const tabButtons = Array.from(document.querySelectorAll<HTMLButtonElement>(".journey-tab"));
+  const panels = Array.from(document.querySelectorAll<HTMLElement>("[data-panel]"));
+
+  tabButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      const target = button.dataset.tab;
+
+      tabButtons.forEach((btn) => {
+        btn.setAttribute("aria-selected", String(btn === button));
+      });
+
+      panels.forEach((panel) => {
+        panel.hidden = panel.dataset.panel !== target;
+      });
+    });
+  });
+</script>
