@@ -22,6 +22,7 @@ export interface Job {
   startDate: string; // "YYYY" or "YYYY-MM"
   endDate?: string;  // "YYYY" or "YYYY-MM" — omit if current
   description: string;
+  summary: string;
   technologies: string[];
 }
 
@@ -45,20 +46,25 @@ export interface Certification {
   note?: string;
 }
 
-export type SkillCategory = "backend" | "frontend" | "devops" | "tools";
+export interface Interest {
+  title: string;
+  note: string;
+}
 
-export interface Skill {
+export interface Project {
   name: string;
-  category: SkillCategory;
+  url: string;
+  description: string;
+  image: string;
 }
 
 // ─── Personal Info ───────────────────────────────────────────────────────────
 
 export const personalInfo: PersonalInfo = {
   name: "Javier García Álvarez",
-  title: "Desarrollador Backend",
+  title: "Software Engineer",
   location: "Malaga, España",
-  bio: "Desarrollador backend con más de 5 años de experiencia en plataformas empresariales, especializado en Spring Boot y arquitecturas orientadas a servicios. Actualmente explorando el espacio de IA aplicada a finanzas: construyo herramientas propias para análisis de inversión y automatización con agentes. Me muevo bien en entornos complejos, aprendo rápido y tengo una inclinación natural por entender los sistemas desde dentro hacia fuera.",
+  bio: "Soy un Software & Agent Engineer con 7 años de experiencia diseñando arquitecturas de software. Defensor a ultranza del Clean Code y los principios SOLID",
   summary:
     "Especializado en Java y Spring Boot, con experiencia en APIs REST, observabilidad, procesamiento de datos y mantenimiento evolutivo de plataformas complejas.",
   email: "fjgarcia.alvarez@hotmail.com",
@@ -75,26 +81,43 @@ export const personalInfo: PersonalInfo = {
   },
 };
 
+// ─── Interests ───────────────────────────────────────────────────────────────
+
+export const interests: Interest[] = [
+  { title: "IA", note: "agentes y automatización" },
+  { title: "Finanzas", note: "mercados" },
+  { title: "Geopolítica", note: "lo que mueve el mundo" },
+];
+
+// ─── Personal project ──────────────────────────────────────────────────────
+
+export const project: Project = {
+  name: "Tu Cartera",
+  url: "https://tu-cartera.garal.app",
+  description:
+    "Una app que construyo en mi tiempo libre para seguir y analizar mi cartera de inversión.",
+  image: "images/tu-cartera-landing.png",
+};
+
 // ─── Jobs ────────────────────────────────────────────────────────────────────
 
 export const jobs: Job[] = [
   {
     company: "Banco Santander(SDS)",
-    role: "Desarrollador",
+    role: "Tech Lead & Agent Engineer",
     startDate: "2025",
     description:
       "Analisis de requisitos y definicion de la solucion tecnica para multiples aplicaciones.Liderazgo en el desarrollo de dichas aplicaciones impulsando el trabajo en equipo y el compliance con las bases de 'Clean Code'.Gestion y manejo de Elasticsearch, para la ingesta de la informacion y uso de Kibana para implementar las visualizaciones necesarias.Desarrollo de los aplicativos en Springboot implementando integraciones con multiples herramientas como kafka, S3, Elasticsearch...",
+    summary:
+      "Dirijo la arquitectura y el desarrollo de ecosistemas de software, transformando requisitos complejos en soluciones robustas con Spring Boot, Kafka, S3 y Elasticsearch. Promuevo una cultura de excelencia técnica aplicando Clean Code y principios SOLID.",
     technologies: [
-      "Elasticsearch",
-      "Kibana",
-      "Filebeat",
-      "Spring",
-      "Spark",
+      "Elastic Stack",
+      "Spring Framework",
       "Git",
       "SQL",
       "Openshift",
       "DEVIN",
-      "Agentic Ecosystem"
+      "Agentic Ecosystem",
     ],
   },
   {
@@ -104,12 +127,12 @@ export const jobs: Job[] = [
     endDate: "2025",
     description:
       "Estimación, diseño e implementación de una aplicación orientada a generar indicadores de riesgo. Trabajo sobre flujos con varios KPIs, búsquedas con Elasticsearch y mejora del rendimiento mediante procesos batch para tratamiento e indexación de datos.",
+    summary:
+      "Lideré el diseño end-to-end y la implementación de una plataforma orientada a la generación de indicadores de riesgo. Optimicé drásticamente el rendimiento en el tratamiento de grandes volúmenes de datos mediante la orquestación de procesos batch y la integración de Elastic Stack.",
     technologies: [
-      "Elasticsearch",
-      "Kibana",
-      "Filebeat",
+      "Elastic Stack",
+      "Spring Framework",
       "Grafana",
-      "Spring Batch",
       "Spark",
       "Git",
       "SQL",
@@ -122,15 +145,16 @@ export const jobs: Job[] = [
     endDate: "2022",
     description:
       "Implementación de un sistema multiplataforma integrado con un servicio IoT. Desarrollo y mantenimiento de backend, app Android, API REST y componentes web conectados con la plataforma y con dispositivos que recogen y transmiten información.",
+    summary:
+      "Diseñé y construí una solución multiplataforma conectada directamente con servicios IoT. Abarqué el ciclo de vida completo del producto: desde la ingesta y transmisión de datos de los dispositivos físicos, hasta el desarrollo robusto del backend.",
     technologies: [
-      "Spring Boot",
+      "Spring Framework",
       "Java",
       "Android",
       "HTML",
       "JSP",
-      "Hibernate",
+      "Hibernate/JPA",
       "MySQL",
-      "JPA",
       "Jenkins",
       "Git",
       "Docker",
@@ -145,16 +169,17 @@ export const jobs: Job[] = [
     endDate: "2021",
     description:
       "Desarrollo backend y frontend en proyectos para organismos públicos, incluido el sistema GALILEO de la ESA. Implementación de microservicios y APIs REST, mantenimiento evolutivo y desarrollo de software de comunicación entre componentes.",
+    summary:
+      "Desarrollé e integré soluciones tecnológicas estratégicas para el sector público, contribuyendo directamente al sistema satelital GALILEO de la Agencia Espacial Europea (ESA).",
     technologies: [
-      "Spring Boot",
+      "Spring Framework",
       "Java",
       "HTML",
       "JSP",
       "TypeScript",
-      "Hibernate",
+      "Hibernate/JPA",
       "MySQL",
       "Oracle",
-      "JPA",
       "Jenkins",
       "Git",
       "Docker",
@@ -170,14 +195,13 @@ export const education: Education[] = [
     degree: "Grado en Ingeniería de Computadores",
     startYear: "2014",
     endYear: "2019",
-    details: [
-      "Ganador de la beca del Programa de Campus Sostenible 2020 por el desarrollo del trabajo de fin de grado.",
-    ],
+    details: ["Universidad Politécnica de Madrid. Beca Campus Sostenible 2020 por el TFG."],
   },
   {
     institution: "Universidad de las Hespérides",
-    degree: "Especialización en Inversión Multimercado y Diversificación por la Universidad de las Hespérides",
+    degree: "Especialización en Inversión Multimercado y Diversificación",
     startYear: "2025",
+    details: ["Universidad de las Hespérides"],
   },
 ];
 
@@ -207,68 +231,23 @@ export const certifications: Certification[] = [
 
 // ─── Skills ──────────────────────────────────────────────────────────────────
 
-export const skills: Skill[] = [
-  // Backend
-  { name: "Spring Boot", category: "backend" },
-  { name: "Java", category: "backend" },
-  { name: "REST APIs", category: "backend" },
-  { name: "Spring Batch", category: "backend" },
-  { name: "Hibernate / JPA", category: "backend" },
-  { name: "SQL", category: "backend" },
-  { name: "MySQL", category: "backend" },
-  { name: "Oracle", category: "backend" },
-
-  // Frontend
-  { name: "TypeScript", category: "frontend" },
-  { name: "Android", category: "frontend" },
-  { name: "HTML / CSS", category: "frontend" },
-  { name: "JSP", category: "frontend" },
-  { name: "FreeMarker", category: "frontend" },
-
-  // DevOps
-  { name: "Docker", category: "devops" },
-  { name: "Jenkins", category: "devops" },
-  { name: "GitHub Actions", category: "devops" },
-
-  // Tools
-  { name: "Git", category: "tools" },
-  { name: "Grafana", category: "tools" },
-  { name: "Kibana", category: "tools" },
-  { name: "Filebeat", category: "tools" },
-  { name: "Elasticsearch", category: "tools" },
-  { name: "Spark", category: "tools" },
-  { name: "ThingsBoard", category: "tools" },
-  { name: "Liferay", category: "tools" },
+export const skills: string[] = [
+  "Java",
+  "Spring Framework",
+  "API Rest",
+  "SQL",
+  "Elastic Stack",
+  "Spark",
+  "Kafka",
+  "Docker",
+  "Github",
+  "OpenShift",
+  "Grafana",
+  "TypeScript",
+  "Python",
 ];
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
-
-/** Returns skills grouped by category. */
-export function getSkillsByCategory(): Record<SkillCategory, Skill[]> {
-  return skills.reduce(
-    (acc, skill) => {
-      acc[skill.category].push(skill);
-      return acc;
-    },
-    {
-      backend: [],
-      frontend: [],
-      devops: [],
-      tools: [],
-    } as Record<SkillCategory, Skill[]>
-  );
-}
-
-/** Returns the display label for a skill category. */
-export function getCategoryLabel(category: SkillCategory): string {
-  const labels: Record<SkillCategory, string> = {
-    backend: "Backend",
-    frontend: "Frontend",
-    devops: "DevOps",
-    tools: "Herramientas",
-  };
-  return labels[category];
-}
 
 /** Returns whether a job is current (no endDate). */
 export function isCurrentJob(job: Job): boolean {
