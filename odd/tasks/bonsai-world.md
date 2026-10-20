@@ -16,9 +16,9 @@ Current phase: Gate 2 (graybox, camera endpoints, growth generator).
 
 | ID | Task | Specs | Route | Commit |
 |---|---|---|---|---|
-| T1 | Commit approved design docs (DESIGN.md, world bible, this file) | S3 | inline | — |
-| T2 | Graybox `/bonsai` route: Three.js island, scroll conductor, 7-chapter data with camera endpoints, primitive tray/soil/rocks/stairs/pagoda, debug path overlay | S3, S4 | worker | — |
-| T3 | Growth generator: seeded procedural bonsai with per-segment birth/death driven by scroll (`uGrowth`), wire and pruning; generator decision recorded | S1 | worker (with T2) | — |
+| T1 ✅ | Commit approved design docs (DESIGN.md, world bible, this file) | S3 | inline | `4575e6f` (docs slice, own commit) |
+| T2 ✅ | Graybox `/bonsai` route: Three.js island, scroll conductor, 7-chapter data with camera endpoints, primitive tray/soil/rocks/stairs/pagoda, debug path overlay | S3, S4 | worker | `87ea404` (deps, own commit: risk item 5), `33dcec5`, `e6e25e2` |
+| T3 ✅ | Growth generator: seeded procedural bonsai with per-segment birth/death driven by scroll (`uGrowth`), wire and pruning; generator decision recorded | S1 | worker (with T2) | `936f168` |
 | T4 | Gate 2 review: per-chapter screenshots (desktop + mobile), forward and reverse scroll; user approval | S1, S3 | inline + verify | — |
 | T5 | Gate 3: material and lighting slice on the trunk chapter (PBR bark, moss, HDRI) | S2, S5 | pending | — |
 | T6 | Gates 4–6: transitions, mobile tier and performance budget | S2, S4 | pending | — |
@@ -32,4 +32,7 @@ Current phase: Gate 2 (graybox, camera endpoints, growth generator).
 - **L4** (user): "vamos con la realista" (chosen over the recommended stylized direction)
 - **L5** (user): "dale vamos a ver que sale me convence el orden de las escenas" (Gate 1 approved; start Gate 2)
 - **L6** (decision): Growth generator is custom, not `@dgreenheck/ez-tree` (MIT 1.1.0). ez-tree has no per-branch growth data and no bonsai preset; growth needs per-segment birth/death attributes that a custom generator emits directly. ez-tree stays a reference for bark and leaf handling.
+- **L8** (evidence, Gate 2): `node --test tests/bonsai/` 23/23 pass (re-run by parent). Screenshots of all 7 chapters at 1440×900 and 390×844 in `.playwright-mcp/bonsai-g2/` (ignored). Growth, wire, 4 branches in order and dusk pagoda render. Findings: (1) mobile chapter cards cover most of the 3D; (2) `trunk` camera too close, segment seams visible; (3) `finished` desktop crops the tree top; (4) the seed reads as a pebble; (5) the wire stays on the finished tree; (6) fast jumps make the damped camera pass close to the trunk. Native review assess unavailable: untracked skill folders block it. Independent verify launched for risk item 5 (new dependency).
+- **L10** (evidence, independent verify): No blockers. S1 pass, S3 pass, S4 pass (structural; shader rendering confirmed by parent screenshots). Lock adds 8 packages from registry.npmjs.org with integrity hashes and no install scripts: three (MIT) plus 7 dev-only packages via @types/three. Scope clean, home untouched. Typecheck unavailable (no tsc or @astrojs/check installed). Advisories: career order has two sources (`bonsai.astro` reverses `jobs`, the generator sorts by `startDate`); the idle loop never sleeps; no guard for zero-height resize. Added the verifier's GPU-layer regression tests (`tests/bonsai/reversibility.test.ts`): 27/27 pass.
+- **L9** (delivery): The branch holds 5 reviewable commits (~2.9k authored lines). Opening the PR(s) and how to split them stays the user's decision.
 - **L7** (decision): Graybox ships on a separate `/bonsai` route so the current home stays untouched until T7. Tests use the built-in `node --test` runner (Node 26 strips TypeScript natively), so no test dependency is added.
