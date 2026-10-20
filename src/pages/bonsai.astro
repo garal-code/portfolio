@@ -1,0 +1,202 @@
+---
+import Layout from "../layouts/Layout.astro";
+import BonsaiWorld from "../components/bonsai/BonsaiWorld.astro";
+import { CHAPTERS, type ChapterId } from "../lib/bonsai/chapters.ts";
+import {
+  education,
+  interests,
+  jobs,
+  personalInfo,
+  project,
+  skills,
+} from "../data/resume.ts";
+
+// Graybox page (Gate 2): one section per chapter, in the approved S3 order.
+// Section height follows the chapter scrollWeight; the canvas is fixed behind.
+const weight = (id: ChapterId) =>
+  CHAPTERS.find((chapter) => chapter.id === id)!.scrollWeight;
+const sectionStyle = (id: ChapterId) =>
+  `min-height: calc(${weight(id)} * 100svh);`;
+
+const years = (start: string, end?: string) => `${start}–${end ?? "hoy"}`;
+// resume.ts lists jobs newest first; the branches grow oldest first.
+const careerJobs = [...jobs].reverse();
+const careerSlice = weight("branches") / careerJobs.length;
+
+const sectionClass =
+  "relative z-10 flex items-end px-6 py-10 md:items-center md:px-16";
+const panelClass =
+  "w-full rounded-2xl border border-forest/10 bg-cream/85 p-6 backdrop-blur-sm md:max-w-[40%]";
+const eyebrowClass =
+  "text-xs font-bold uppercase tracking-[0.2em] text-sage-dark";
+const titleClass =
+  "mt-3 font-display text-4xl font-extrabold tracking-tight text-forest";
+const bodyClass = "mt-3 text-base leading-relaxed text-body";
+---
+
+<Layout
+  title={`Bonsai — ${personalInfo.name}`}
+  description={personalInfo.summary}
+>
+  <BonsaiWorld />
+
+  <section
+    id="seed"
+    data-chapter="seed"
+    class={sectionClass}
+    style={sectionStyle("seed")}
+    aria-labelledby="seed-title"
+  >
+    <div class={panelClass}>
+      <p class={eyebrowClass}>01 · Semilla</p>
+      <h1
+        id="seed-title"
+        class="mt-3 font-display text-5xl font-extrabold leading-[0.95] tracking-tight text-forest"
+      >
+        {personalInfo.name}
+      </h1>
+      <p class={bodyClass}>{personalInfo.bio}</p>
+      <ul class="mt-4 flex flex-wrap gap-2 text-sm text-forest">
+        {
+          interests.map((interest) => (
+            <li class="rounded-full bg-sand px-3 py-1">
+              {interest.title} · {interest.note}
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
+  <section
+    id="sprout"
+    data-chapter="sprout"
+    class={sectionClass}
+    style={sectionStyle("sprout")}
+    aria-labelledby="sprout-title"
+  >
+    <div class={panelClass}>
+      <p class={eyebrowClass}>02 · Brote</p>
+      <h2 id="sprout-title" class={titleClass}>Dónde empezó</h2>
+      <ul class="mt-4 space-y-3 text-base text-body">
+        {
+          education.map((item) => (
+            <li>
+              <p class="font-semibold text-ink">{item.degree}</p>
+              <p class="text-sm text-meta">
+                {item.institution} · {years(item.startYear, item.endYear)}
+              </p>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
+  <section
+    id="trunk"
+    data-chapter="trunk"
+    class={sectionClass}
+    style={sectionStyle("trunk")}
+    aria-labelledby="trunk-title"
+  >
+    <div class={panelClass}>
+      <p class={eyebrowClass}>03 · Tronco</p>
+      <h2 id="trunk-title" class={titleClass}>Los fundamentos</h2>
+      <p class={bodyClass}>{personalInfo.summary}</p>
+      <ul class="mt-4 flex flex-wrap gap-2 text-sm text-forest">
+        {skills.map((skill) => <li class="rounded-full bg-sand px-3 py-1">{skill}</li>)}
+      </ul>
+    </div>
+  </section>
+
+  <section
+    id="branches"
+    data-chapter="branches"
+    class="relative z-10 px-6 md:px-16"
+    style={sectionStyle("branches")}
+    aria-labelledby="branches-title"
+  >
+    <ol class="m-0 list-none p-0">
+      {
+        careerJobs.map((job, index) => (
+          <li
+            class="flex items-end py-10 md:items-center"
+            style={`min-height: calc(${careerSlice} * 100svh);`}
+          >
+            <article class={panelClass}>
+              {index === 0 && (
+                <>
+                  <p class={eyebrowClass}>04 · Ramas</p>
+                  <h2 id="branches-title" class={titleClass}>La carrera</h2>
+                </>
+              )}
+              <p class="mt-4 font-display text-2xl font-bold text-forest">
+                {job.company}
+              </p>
+              <p class="text-sm text-meta">
+                {job.role} · {years(job.startDate, job.endDate)}
+              </p>
+              <p class={bodyClass}>{job.summary}</p>
+            </article>
+          </li>
+        ))
+      }
+    </ol>
+  </section>
+
+  <section
+    id="pruning"
+    data-chapter="pruning"
+    class={sectionClass}
+    style={sectionStyle("pruning")}
+    aria-labelledby="pruning-title"
+  >
+    <div class={panelClass}>
+      <p class={eyebrowClass}>05 · Poda</p>
+      <h2 id="pruning-title" class={titleClass}>Cómo trabaja</h2>
+      <ul class="mt-4 space-y-2 text-base text-body">
+        {personalInfo.highlights.map((highlight) => <li>{highlight}</li>)}
+      </ul>
+    </div>
+  </section>
+
+  <section
+    id="pagoda"
+    data-chapter="pagoda"
+    class={sectionClass}
+    style={sectionStyle("pagoda")}
+    aria-labelledby="pagoda-title"
+  >
+    <div class={panelClass}>
+      <p class={eyebrowClass}>06 · Pagoda</p>
+      <h2 id="pagoda-title" class={titleClass}>{project.name}</h2>
+      <p class={bodyClass}>{project.description}</p>
+      <a
+        href={project.url}
+        class="mt-4 inline-block rounded-full bg-forest px-5 py-2 text-sm font-bold text-cream"
+        rel="noopener"
+      >
+        Ver {project.name}
+      </a>
+    </div>
+  </section>
+
+  <section
+    id="finished"
+    data-chapter="finished"
+    class={sectionClass}
+    style={sectionStyle("finished")}
+    aria-labelledby="finished-title"
+  >
+    <div class={panelClass}>
+      <p class={eyebrowClass}>07 · Bonsai terminado</p>
+      <h2 id="finished-title" class={titleClass}>Hablemos</h2>
+      <ul class="mt-4 space-y-2 text-base text-forest underline">
+        <li><a href={`mailto:${personalInfo.email}`}>{personalInfo.email}</a></li>
+        <li><a href={personalInfo.links.github} rel="noopener">GitHub</a></li>
+        <li><a href={personalInfo.links.linkedin} rel="noopener">LinkedIn</a></li>
+      </ul>
+    </div>
+  </section>
+</Layout>

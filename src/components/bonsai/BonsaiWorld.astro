@@ -1,0 +1,19 @@
+---
+// Client island: owns the single renderer, scene and camera for /bonsai.
+// The canvas is created by the script, so it is simply absent without WebGL
+// and the document-flow sections below stay fully readable.
+---
+
+<div data-bonsai-world hidden></div>
+
+<script>
+  import { mountBonsaiWorld } from "../../lib/bonsai/world.ts";
+
+  const dispose = mountBonsaiWorld({
+    debug: new URLSearchParams(window.location.search).has("debug"),
+  });
+
+  if (import.meta.hot) {
+    import.meta.hot.dispose(() => dispose?.());
+  }
+</script>
