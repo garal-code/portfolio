@@ -5,6 +5,7 @@
 // time (`birth`, `span`, `death`) taken from the chapter growth windows, so
 // scrolling only reveals it: no wall-clock time is involved anywhere.
 
+import { careerEntries } from "./career.ts";
 import { growthWindow } from "./chapters.ts";
 import { DEATH_SPAN, SPROUT_HEIGHT, TRUNK_GROW, WIRE_WINDOW } from "./growth.ts";
 import { jobs as resumeJobs } from "../../data/resume.ts";
@@ -172,9 +173,7 @@ export function generateBonsai(seed: number = DEFAULT_SEED, options: GenerateOpt
   }
 
   // ── Career branches: one per job, chronological, bottom-up ─────────────
-  const chronological = jobList
-    .map((job, index) => ({ job, index }))
-    .sort((a, b) => (a.job.startDate < b.job.startDate ? -1 : a.job.startDate > b.job.startDate ? 1 : b.index - a.index));
+  const chronological = careerEntries(jobList);
   const branchCount = chronological.length;
   const slice = (branchesWindow.to - branchesWindow.from) / branchCount;
 

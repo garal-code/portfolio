@@ -19,6 +19,9 @@ export const TRUNK_GROW: GrowthWindow = { from: trunk.from, to: trunk.from + tru
 /** The copper wire is drawn once the trunk is done: last 40% of the trunk window. */
 export const WIRE_WINDOW: GrowthWindow = { from: trunk.from + trunkLength * 0.6, to: trunk.to };
 
+/** The wire comes off during pruning, in reverse of how it was drawn. */
+export const WIRE_REMOVAL: GrowthWindow = growthWindow("pruning");
+
 /** Pads relax from their loose shape to the clean pruned shape in `pruning`. */
 export const CONDENSE_WINDOW: GrowthWindow = growthWindow("pruning");
 
@@ -61,4 +64,13 @@ export function padScale(birth: number, span: number, loose: number, growth: num
 /** 0..1 portion of the wire revealed at `growth`. */
 export function wireReveal(growth: number): number {
   return clamp01((growth - WIRE_WINDOW.from) / (WIRE_WINDOW.to - WIRE_WINDOW.from));
+}
+
+/**
+ * 0..1 portion of the wire on the tree: drawn across the trunk window, kept
+ * through the branches, unwound across the pruning window and gone at 1.
+ */
+export function wireExtent(growth: number): number {
+  const removed = clamp01((growth - WIRE_REMOVAL.from) / (WIRE_REMOVAL.to - WIRE_REMOVAL.from));
+  return Math.min(wireReveal(growth), 1 - removed);
 }

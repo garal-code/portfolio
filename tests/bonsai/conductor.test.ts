@@ -92,11 +92,11 @@ test("branches reports one sub-stop per job across its span", () => {
 test("camera path hits the first and last endpoints and is continuous", () => {
   const path = createCameraPath();
   const first = path.at(0);
-  assert.deepEqual(first.position, [0, 6, 22]);
+  assert.deepEqual(first.position, [0, 8, 30]);
   assert.deepEqual(first.target, [0, 0.5, 0]);
   assert.equal(first.fov, 35);
   const last = path.at(1);
-  assert.deepEqual(last.position, [0, 30, 95]);
+  assert.deepEqual(last.position, [0, 34, 128]);
   assert.equal(last.fov, 32);
 
   let previous = path.at(0);
@@ -119,7 +119,9 @@ test("camera path passes through every waypoint with its own pose", () => {
     assert.equal(path.waypoints.length, 10);
     for (const waypoint of path.waypoints) {
       const pose = path.at(waypoint.progress);
-      assert.deepEqual(pose.position.map((value) => Math.round(value * 1e6) / 1e6 + 0), [...waypoint.pose.position]);
+      pose.position.forEach((value, axis) => {
+        assert.ok(Math.abs(value - waypoint.pose.position[axis]!) < 1e-6, `${waypoint.label} axis ${axis}`);
+      });
       assert.ok(Math.abs(pose.fov - waypoint.pose.fov) < 1e-9);
     }
   }
@@ -128,7 +130,7 @@ test("camera path passes through every waypoint with its own pose", () => {
 test("mobile camera path uses the mobile overrides", () => {
   const desktop = createCameraPath({ mobile: false });
   const mobile = createCameraPath({ mobile: true });
-  assert.deepEqual(mobile.at(0).position, [0, 9, 30]);
+  assert.deepEqual(mobile.at(0).position, [0, 12, 40]);
   assert.equal(mobile.at(0).fov, 46);
   assert.notDeepEqual(mobile.at(0.5), desktop.at(0.5));
 });

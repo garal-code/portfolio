@@ -66,21 +66,33 @@ function pullBack(base: CameraPose, factor: number, fov: number): CameraPose {
   );
 }
 
-const seedPose = pose([0, 6, 22], [0, 0.5, 0], 35);
-const sproutPose = pose([-8, 4, 16], [0, 3, 0], 34);
-const trunkPose = pose([10, 14, 24], [0, 12, 0], 36);
-const pruningPose = pose([14, 34, 30], [0, 32, 0], 34);
-const pagodaPose = pose([-20, 8, 26], [-14, 5, 0], 32);
-const finishedPose = pose([0, 30, 95], [0, 18, 0], 32);
+// Gate 2 correction (S6): every camera sits 1.3x to 2.4x further from its target
+// than in the first graybox, so each landmark reads in full:
+//   seed/sprout 1.35x, branches 1.4x-2.1x, pagoda 1.6x (top tier in frame),
+//   trunk 2.7x (trunk and wire, target raised to the middle of the trunk),
+//   pruning 2.5x (the crown), finished 1.35x (the whole tree).
+// The renderer draws each target inside the copy-free area (framing.ts).
+const seedPose = pose([0, 8, 30], [0, 0.5, 0], 35);
+const sproutPose = pose([-10, 5.5, 22], [0, 3, 0], 34);
+const trunkPose = pose([28, 32, 64], [0, 22, 0], 36);
+const pruningPose = pose([35, 40, 75], [0, 32, 0], 34);
+const pagodaPose = pose([-24, 12, 42.5], [-14, 7, 0], 32);
+const finishedPose = pose([0, 34, 128], [0, 18, 0], 32);
 
-// Bible: position [-6, 26, 40], target y 8 -> 38 over 4 sub-stops, one per job
-// (bottom-up, chronological). The camera rises along the trunk around y = 26.
-const branchStops: readonly CameraPose[] = [
-  pose([-6, 20, 40], [0, 8, 0], 38),
+// Bible: target y 8 -> 38 over 4 sub-stops, one per job (bottom-up,
+// chronological). The camera rises along the trunk. Gate 2 stops were at
+// [-6, 20..32, 40]; each is pulled back from its own target. The first branch
+// points toward the camera, so its stop looks from further left and pulls most.
+const BRANCH_BASE: readonly CameraPose[] = [
+  pose([-30, 18, 36], [0, 8, 0], 38),
   pose([-6, 24, 40], [0, 18, 0], 38),
   pose([-6, 28, 40], [0, 28, 0], 38),
   pose([-6, 32, 40], [0, 38, 0], 38),
 ];
+const BRANCH_PULL = [1.6, 1.5, 1.8, 1.4] as const;
+const branchStops: readonly CameraPose[] = BRANCH_BASE.map((stop, index) =>
+  pullBack(stop, BRANCH_PULL[index]!, 38),
+);
 
 const DAYLIGHT = { sky: 0xdfe6df, key: 0xf2f5f7 };
 const GOLDEN = { sky: 0xe8d9b4, key: 0xffd08a };
@@ -94,7 +106,7 @@ export const CHAPTERS: readonly Chapter[] = [
     scrollWeight: 1.2,
     growth: { from: 0, to: 0.02 },
     stops: [seedPose],
-    mobileStops: [mobile(seedPose, [0, 9, 30], 46)],
+    mobileStops: [mobile(seedPose, [0, 12, 40], 46)],
     light: { ...DAYLIGHT, keyIntensity: 2.4, lanterns: 0 },
   },
   {
@@ -102,7 +114,7 @@ export const CHAPTERS: readonly Chapter[] = [
     scrollWeight: 1.0,
     growth: { from: 0.02, to: 0.14 },
     stops: [sproutPose],
-    mobileStops: [mobile(sproutPose, [-6, 7, 24], 46)],
+    mobileStops: [mobile(sproutPose, [-8, 9.5, 32], 46)],
     light: { ...DAYLIGHT, keyIntensity: 2.4, lanterns: 0 },
   },
   {
@@ -110,7 +122,7 @@ export const CHAPTERS: readonly Chapter[] = [
     scrollWeight: 1.4,
     growth: { from: 0.14, to: 0.4 },
     stops: [trunkPose],
-    mobileStops: [mobile(trunkPose, [8, 16, 34], 48)],
+    mobileStops: [mobile(trunkPose, [22, 30, 87], 50)],
     light: { ...DAYLIGHT, keyIntensity: 2.2, lanterns: 0 },
   },
   {
@@ -118,7 +130,7 @@ export const CHAPTERS: readonly Chapter[] = [
     scrollWeight: 2.4,
     growth: { from: 0.4, to: 0.8 },
     stops: branchStops,
-    mobileStops: branchStops.map((stop) => pullBack(stop, 1.25, 46)),
+    mobileStops: branchStops.map((stop) => pullBack(stop, 1.4, 46)),
     light: { ...DAYLIGHT, keyIntensity: 2.0, lanterns: 0 },
   },
   {
@@ -126,7 +138,7 @@ export const CHAPTERS: readonly Chapter[] = [
     scrollWeight: 1.2,
     growth: { from: 0.8, to: 1 },
     stops: [pruningPose],
-    mobileStops: [mobile(pruningPose, [10, 36, 42], 46)],
+    mobileStops: [mobile(pruningPose, [31, 50, 130], 46)],
     light: { ...GOLDEN, keyIntensity: 1.6, lanterns: 0 },
   },
   {
@@ -134,7 +146,7 @@ export const CHAPTERS: readonly Chapter[] = [
     scrollWeight: 1.2,
     growth: { from: 1, to: 1 },
     stops: [pagodaPose],
-    mobileStops: [mobile(pagodaPose, [-18, 10, 36], 44)],
+    mobileStops: [mobile(pagodaPose, [-19.5, 11, 49], 44)],
     light: { ...DUSK, keyIntensity: 0.9, lanterns: 1 },
   },
   {
@@ -142,7 +154,7 @@ export const CHAPTERS: readonly Chapter[] = [
     scrollWeight: 1.0,
     growth: { from: 1, to: 1 },
     stops: [finishedPose],
-    mobileStops: [mobile(finishedPose, [0, 34, 130], 42)],
+    mobileStops: [mobile(finishedPose, [0, 41, 188], 42)],
     light: { sky: 0x0b2620, key: DUSK.key, keyIntensity: 0.6, lanterns: 1 },
   },
 ];

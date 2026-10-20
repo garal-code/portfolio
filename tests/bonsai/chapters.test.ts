@@ -19,14 +19,14 @@ test("scroll weights follow the world bible ledger", () => {
   );
 });
 
-test("single-stop camera endpoints and mobile overrides match world bible section 5", () => {
+test("single-stop camera endpoints and mobile overrides match world bible section 5 (Gate 2 corrections)", () => {
   const expected = {
-    seed: { position: [0, 6, 22], target: [0, 0.5, 0], fov: 35, mPos: [0, 9, 30], mFov: 46 },
-    sprout: { position: [-8, 4, 16], target: [0, 3, 0], fov: 34, mPos: [-6, 7, 24], mFov: 46 },
-    trunk: { position: [10, 14, 24], target: [0, 12, 0], fov: 36, mPos: [8, 16, 34], mFov: 48 },
-    pruning: { position: [14, 34, 30], target: [0, 32, 0], fov: 34, mPos: [10, 36, 42], mFov: 46 },
-    pagoda: { position: [-20, 8, 26], target: [-14, 5, 0], fov: 32, mPos: [-18, 10, 36], mFov: 44 },
-    finished: { position: [0, 30, 95], target: [0, 18, 0], fov: 32, mPos: [0, 34, 130], mFov: 42 },
+    seed: { position: [0, 8, 30], target: [0, 0.5, 0], fov: 35, mPos: [0, 12, 40], mFov: 46 },
+    sprout: { position: [-10, 5.5, 22], target: [0, 3, 0], fov: 34, mPos: [-8, 9.5, 32], mFov: 46 },
+    trunk: { position: [28, 32, 64], target: [0, 22, 0], fov: 36, mPos: [22, 30, 87], mFov: 50 },
+    pruning: { position: [35, 40, 75], target: [0, 32, 0], fov: 34, mPos: [31, 50, 130], mFov: 46 },
+    pagoda: { position: [-24, 12, 42.5], target: [-14, 7, 0], fov: 32, mPos: [-19.5, 11, 49], mFov: 44 },
+    finished: { position: [0, 34, 128], target: [0, 18, 0], fov: 32, mPos: [0, 41, 188], mFov: 42 },
   } as const;
 
   for (const [id, want] of Object.entries(expected)) {
@@ -41,7 +41,7 @@ test("single-stop camera endpoints and mobile overrides match world bible sectio
   }
 });
 
-test("branches expands into 4 sub-stops rising 8 to 38 with a 25% mobile pull back", () => {
+test("branches expands into 4 sub-stops rising 8 to 38, with the mobile stops pulled back 40% from desktop", () => {
   const branches = CHAPTERS.find((chapter) => chapter.id === "branches")!;
   assert.equal(branches.stops.length, 4);
   assert.equal(branches.mobileStops.length, 4);
@@ -49,14 +49,15 @@ test("branches expands into 4 sub-stops rising 8 to 38 with a 25% mobile pull ba
     branches.stops.map((stop) => stop.target[1]),
     [8, 18, 28, 38],
   );
-  assert.ok(branches.stops.every((stop) => stop.fov === 38 && stop.position[0] === -6 && stop.position[2] === 40));
-  const meanY = branches.stops.reduce((sum, stop) => sum + stop.position[1], 0) / 4;
-  assert.equal(meanY, 26);
+  assert.ok(branches.stops.every((stop) => stop.fov === 38 && stop.target[0] === 0 && stop.target[2] === 0));
+  const cameraY = branches.stops.map((stop) => stop.position[1]);
+  assert.deepEqual(cameraY, [...cameraY].sort((a, b) => a - b), "the camera rises with the branches");
 
   branches.stops.forEach((stop, index) => {
     const mobile = branches.mobileStops[index]!;
+    assert.equal(mobile.fov, 46);
     for (let axis = 0; axis < 3; axis += 1) {
-      const pulled = stop.target[axis]! + (stop.position[axis]! - stop.target[axis]!) * 1.25;
+      const pulled = stop.target[axis]! + (stop.position[axis]! - stop.target[axis]!) * 1.4;
       assert.ok(Math.abs(mobile.position[axis]! - pulled) < 1e-9, `stop ${index} axis ${axis}`);
     }
   });
