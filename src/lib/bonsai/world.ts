@@ -3,10 +3,13 @@
 // the camera only (threejs-scroll-worlds, realtime-architecture section 5).
 
 import * as THREE from "three";
+import { buildObstacles, keepClear } from "./clearance.ts";
 import { createCameraPath, resolveProgress, worldAt, type ConductorState } from "./conductor.ts";
 import { createDebugOverlay, type DebugOverlay } from "./debug.ts";
+import { hasArea, screenAnchor, viewOffsetFor } from "./framing.ts";
 import { DEFAULT_SEED, generateBonsai } from "./generator.ts";
 import { createGraybox } from "./graybox.ts";
+import { createFrameLoop } from "./loop.ts";
 import { createScrollDriver } from "./scroll.ts";
 import { createTree } from "./tree.ts";
 
@@ -16,7 +19,6 @@ export interface MountOptions {
 }
 
 const DPR_CAP = { mobile: 1.35, desktop: 1.75 };
-const MAX_DT = 1 / 30;
 const MOBILE_QUERY = "(max-width: 767px)";
 
 /**
@@ -49,12 +51,13 @@ export function mountBonsaiWorld(options: MountOptions = {}): (() => void) | nul
 
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0xdfe6df);
-  scene.fog = new THREE.Fog(0xdfe6df, 130, 340);
+  scene.fog = new THREE.Fog(0xdfe6df, 200, 480); // `finished` sits ~190 away on mobile
 
-  const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 600);
+  const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 700);
   const graybox = createGraybox();
   const data = generateBonsai(options.seed ?? DEFAULT_SEED);
   const tree = createTree(data);
+  const obstacles = buildObstacles(data);
   scene.add(graybox.group, tree.group);
 
   let path = createCameraPath({ mobile });
@@ -65,19 +68,28 @@ export function mountBonsaiWorld(options: MountOptions = {}): (() => void) | nul
   let dirty = true;
   const driver = createScrollDriver({
     reducedMotion: reducedQuery.matches,
-    onExactChange: () => {
-      dirty = true;
-    },
+    onExactChange: () => wake(),
   });
-  let running = true;
-  let frame = 0;
-  let last = 0;
   let width = 0;
   let height = 0;
+
+  // The loop sleeps when nothing changes: no scroll, camera settled, no debug.
+  const loop = createFrameLoop({
+    request: (callback) => requestAnimationFrame(callback),
+    cancel: (id) => cancelAnimationFrame(id),
+    step,
+  });
+
+  function wake() {
+    dirty = true;
+    loop.wake();
+  }
 
   function resize() {
     const nextWidth = window.innerWidth;
     const nextHeight = window.innerHeight;
+    // A hidden or collapsed viewport reports 0: keep the last good size.
+    if (!hasArea(nextWidth, nextHeight)) return;
     const nextMobile = mobileQuery.matches;
     if (nextWidth === width && nextHeight === height && nextMobile === mobile) return;
     width = nextWidth;
@@ -90,13 +102,18 @@ export function mountBonsaiWorld(options: MountOptions = {}): (() => void) | nul
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, mobile ? DPR_CAP.mobile : DPR_CAP.desktop));
     renderer.setSize(width, height, false);
     camera.aspect = width / height;
+    // Lens shift: draw the look-at point in the copy-free area (framing.ts).
+    const shift = viewOffsetFor(width, height, screenAnchor(mobile));
+    camera.setViewOffset(width, height, shift.x, shift.y, width, height);
     debug?.resize(camera.aspect);
-    dirty = true;
+    wake();
   }
 
   function render() {
+    if (!hasArea(width, height)) return;
     const pose = path.at(driver.smooth);
-    camera.position.set(...pose.position);
+    // Safety net for fast jumps: never sweep through the grown tree.
+    camera.position.set(...keepClear(pose.position, obstacles));
     camera.lookAt(...pose.target);
     if (camera.fov !== pose.fov) camera.fov = pose.fov;
     camera.updateProjectionMatrix();
@@ -115,63 +132,51 @@ export function mountBonsaiWorld(options: MountOptions = {}): (() => void) | nul
     debug?.update(state, camera, renderer.info);
   }
 
-  function tick(now: number) {
-    if (!running) return;
-    const dt = last ? Math.min((now - last) / 1000, MAX_DT) : 1 / 60;
-    last = now;
-    if (driver.update(dt)) dirty = true;
+  /** One frame. Returns true while the scene keeps changing. */
+  function step(dt: number): boolean {
+    const moving = driver.update(dt);
+    if (moving) dirty = true;
     if (dirty || debug) {
       dirty = false;
       render();
     }
-    frame = requestAnimationFrame(tick);
-  }
-
-  function schedule() {
-    if (!frame && running) frame = requestAnimationFrame(tick);
-  }
-
-  function pause() {
-    cancelAnimationFrame(frame);
-    frame = 0;
-    last = 0;
+    return moving || Boolean(debug);
   }
 
   const onVisibility = () => {
     if (document.hidden) {
-      pause();
+      loop.pause();
       return;
     }
     driver.read();
-    dirty = true;
-    schedule();
+    wake();
   };
   const onContextLost = (event: Event) => {
     event.preventDefault();
-    running = false;
-    pause();
+    loop.pause();
   };
-  const onContextRestored = () => {
-    running = true;
-    dirty = true;
-    schedule();
+  const onContextRestored = () => wake();
+  const onReducedMotion = () => {
+    driver.setReducedMotion(reducedQuery.matches);
+    wake();
   };
-  const onReducedMotion = () => driver.setReducedMotion(reducedQuery.matches);
+  const onPointer = () => loop.wake();
 
   resize();
   driver.start();
   window.addEventListener("resize", resize, { passive: true });
+  window.addEventListener("pointermove", onPointer, { passive: true });
   document.addEventListener("visibilitychange", onVisibility);
   canvas.addEventListener("webglcontextlost", onContextLost);
   canvas.addEventListener("webglcontextrestored", onContextRestored);
   reducedQuery.addEventListener("change", onReducedMotion);
-  schedule();
+  loop.wake();
 
   return function dispose() {
-    running = false;
-    pause();
+    loop.stop();
     driver.stop();
     window.removeEventListener("resize", resize);
+    window.removeEventListener("pointermove", onPointer);
     document.removeEventListener("visibilitychange", onVisibility);
     canvas.removeEventListener("webglcontextlost", onContextLost);
     canvas.removeEventListener("webglcontextrestored", onContextRestored);

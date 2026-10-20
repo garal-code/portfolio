@@ -5,7 +5,7 @@
 
 import * as THREE from "three";
 import type { BonsaiData } from "./generator.ts";
-import { CONDENSE_WINDOW, DEATH_SPAN, TRUNK_GROW, TRUNK_MIN_THICKNESS, wireReveal } from "./growth.ts";
+import { CONDENSE_WINDOW, DEATH_SPAN, TRUNK_GROW, TRUNK_MIN_THICKNESS, wireExtent } from "./growth.ts";
 
 export interface Tree {
   group: THREE.Group;
@@ -38,15 +38,31 @@ vec3 objectNormal = normalize(segX * normal.x + segZ * normal.z);
 `;
 
 // Mirrors segmentScale() and trunkThickness() in growth.ts.
-const SEGMENT_POSITION = /* glsl */ `
+const SEGMENT_SCALE = /* glsl */ `
 float segGrown = smoothstep(aLife.x, aLife.x + aLife.y, uGrowth);
 float segCut = aLife.z < 1.0 ? smoothstep(aLife.z - uDeathSpan, aLife.z, uGrowth) : 0.0;
 float segScale = segGrown * (1.0 - segCut);
-float segRadius = mix(aRadius.x, aRadius.y, position.y);
-if (aKind < 0.5) {
-  segRadius *= mix(uTrunkMin, 1.0, smoothstep(uTrunkGrow.x, uTrunkGrow.y, uGrowth));
-}
+float segThickness = aKind < 0.5 ? mix(uTrunkMin, 1.0, smoothstep(uTrunkGrow.x, uTrunkGrow.y, uGrowth)) : 1.0;
+`;
+
+const SEGMENT_POSITION = /* glsl */ `
+${SEGMENT_SCALE}
+float segRadius = mix(aRadius.x, aRadius.y, position.y) * segThickness;
 vec3 transformed = aStart + segScale * (segY * (position.y * segLen) + (segX * position.x + segZ * position.z) * segRadius);
+`;
+
+// Joint ball at the tip of every segment: consecutive segments meet at a bend
+// with different axes, and the ball closes the crack so the limb reads as one form.
+const JOINT_NORMAL = /* glsl */ `
+vec3 objectNormal = normalize(normal);
+`;
+
+// Slightly inside the 12-sided limb so the ball only shows where the limb has a gap.
+const JOINT_FIT = "0.94";
+
+const JOINT_POSITION = /* glsl */ `
+${SEGMENT_SCALE}
+vec3 transformed = (aStart + segScale * (aEnd - aStart)) + position * (aRadius.y * ${JOINT_FIT}) * segThickness * segScale;
 `;
 
 const PAD_PRELUDE = /* glsl */ `
@@ -118,7 +134,7 @@ export function createTree(data: BonsaiData): Tree {
 
   // ── Segments ───────────────────────────────────────────────────────────
   const { segments, pads, wire } = data;
-  const cylinder = new THREE.CylinderGeometry(1, 1, 1, 8, 1, true).translate(0, 0.5, 0);
+  const cylinder = new THREE.CylinderGeometry(1, 1, 1, 12, 1, true).translate(0, 0.5, 0);
   const segmentGeometry = instanced(cylinder, segments.count);
   cylinder.dispose();
   const life = interleave([segments.birth, segments.span, segments.death], segments.count, 3);
@@ -140,6 +156,25 @@ export function createTree(data: BonsaiData): Tree {
   segmentMesh.frustumCulled = false; // instanced bounds are not the base geometry bounds
   group.add(segmentMesh);
 
+  // ── Joints: one ball per segment tip, sharing the segment attributes ───
+  const ball = new THREE.SphereGeometry(1, 12, 8);
+  const jointGeometry = instanced(ball, segments.count);
+  ball.dispose();
+  for (const name of ["aStart", "aEnd", "aRadius", "aLife", "aKind"]) {
+    jointGeometry.setAttribute(name, segmentGeometry.getAttribute(name));
+  }
+  const jointMaterial = new THREE.MeshStandardMaterial({ color: TREE_COLORS.bark, roughness: 0.9 });
+  patchMaterial(jointMaterial, "bonsai-joints", SEGMENT_PRELUDE, JOINT_NORMAL, JOINT_POSITION, {
+    uGrowth,
+    uDeathSpan: { value: DEATH_SPAN },
+    uTrunkGrow: { value: new THREE.Vector2(TRUNK_GROW.from, TRUNK_GROW.to) },
+    uTrunkMin: { value: TRUNK_MIN_THICKNESS },
+  });
+  const jointMesh = new THREE.Mesh(jointGeometry, jointMaterial);
+  jointMesh.name = "bonsai-joints";
+  jointMesh.frustumCulled = false;
+  group.add(jointMesh);
+
   // ── Foliage pads ───────────────────────────────────────────────────────
   const sphere = new THREE.SphereGeometry(1, 14, 10);
   const padGeometry = instanced(sphere, pads.count);
@@ -158,7 +193,8 @@ export function createTree(data: BonsaiData): Tree {
   padMesh.frustumCulled = false;
   group.add(padMesh);
 
-  // ── Wire: tube along the 5-turn path, revealed through its draw range ──
+  // ── Wire: tube along the 5-turn path; its draw range grows with the trunk
+  // and unwinds again during pruning (growth.ts wireExtent) ────────────
   const curve = new THREE.CatmullRomCurve3(
     Array.from({ length: wire.count }, (_, i) => new THREE.Vector3(wire.points[i * 3], wire.points[i * 3 + 1], wire.points[i * 3 + 2])),
   );
@@ -172,7 +208,7 @@ export function createTree(data: BonsaiData): Tree {
   wireMesh.visible = false;
   group.add(wireMesh);
 
-  disposables.push(segmentGeometry, padGeometry, wireGeometry, barkMaterial, foliageMaterial, wireMaterial);
+  disposables.push(segmentGeometry, jointGeometry, padGeometry, wireGeometry, barkMaterial, jointMaterial, foliageMaterial, wireMaterial);
   const indicesPerSegment = radial * 6;
   let lastWireCount = -1;
 
@@ -180,7 +216,7 @@ export function createTree(data: BonsaiData): Tree {
     group,
     setGrowth(growth: number) {
       uGrowth.value = growth;
-      const revealed = Math.floor(wireReveal(growth) * tubular);
+      const revealed = Math.floor(wireExtent(growth) * tubular);
       if (revealed !== lastWireCount) {
         lastWireCount = revealed;
         wireMesh.visible = revealed > 0;

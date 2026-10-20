@@ -22,7 +22,9 @@ const COLORS = {
   rock: 0x9b9a94,
   stone: 0xc9c4b8,
   roof: 0x123a2f,
-  seed: 0x7a6f5c,
+  husk: 0xc2a878,
+  seam: 0x4a3b28,
+  root: 0xe4d8b4,
   gold: 0xf3b94c,
 };
 
@@ -54,6 +56,57 @@ function rock(radius: number, seed: number, material: THREE.Material): THREE.Mes
   return mesh;
 }
 
+const SEED = { length: 2.8, width: 0.9, flatten: [0.85, 0.8] as const };
+
+/** Seed outline: round at the base, tapering to a point at +s. Radius at 0..1 along the length. */
+function seedRadius(s: number): number {
+  return SEED.width * Math.sin(Math.PI * Math.pow(s, 0.7));
+}
+
+/**
+ * A seed lying on the soil: almond husk pointed at +x, a dark split along its
+ * flank and a tiny pale root diving into the soil from the tip.
+ */
+function createSeed(husk: THREE.Material, seam: THREE.Material, root: THREE.Material): THREE.Group {
+  const group = new THREE.Group();
+  group.name = "seed";
+  const [flatY, flatZ] = SEED.flatten;
+  const half = SEED.length / 2;
+
+  const profile: THREE.Vector2[] = [];
+  for (let i = 0; i <= 24; i += 1) {
+    const s = i / 24;
+    profile.push(new THREE.Vector2(Math.max(seedRadius(s), 0), -half + SEED.length * s));
+  }
+  const huskGeometry = new THREE.LatheGeometry(profile, 20).rotateZ(-Math.PI / 2).scale(1, flatY, flatZ);
+  const body = new THREE.Mesh(huskGeometry, husk);
+  body.name = "seed-husk";
+
+  // Split: follows the husk surface on the upper front flank.
+  const flank = 0.6;
+  const seamPoints = Array.from({ length: 14 }, (_, i) => {
+    const s = 0.06 + (i / 13) * 0.86;
+    const r = seedRadius(s) * 1.01;
+    return new THREE.Vector3(-half + SEED.length * s, r * flatY * Math.sin(flank), r * flatZ * Math.cos(flank));
+  });
+  const split = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(seamPoints), 24, 0.03, 5), seam);
+  split.name = "seed-split";
+
+  const tip = new THREE.Vector3(half - 0.05, 0, 0);
+  const rootCurve = new THREE.CatmullRomCurve3([
+    tip,
+    tip.clone().add(new THREE.Vector3(0.25, -0.2, 0.03)),
+    tip.clone().add(new THREE.Vector3(0.38, -0.62, 0.08)),
+  ]);
+  const radicle = new THREE.Mesh(new THREE.TubeGeometry(rootCurve, 10, 0.06, 6), root);
+  radicle.name = "seed-root";
+
+  group.add(body, split, radicle);
+  group.position.set(0, 0.62, 0);
+  group.rotation.z = 0.1;
+  return group;
+}
+
 export function createGraybox(): Graybox {
   const group = new THREE.Group();
   group.name = "graybox";
@@ -66,14 +119,16 @@ export function createGraybox(): Graybox {
   const rockMaterial = material(COLORS.rock);
   const stone = material(COLORS.stone);
   const roof = material(COLORS.roof);
-  const seedMaterial = material(COLORS.seed);
+  const huskMaterial = material(COLORS.husk, { roughness: 0.55 });
+  const seamMaterial = material(COLORS.seam);
+  const rootMaterial = material(COLORS.root, { roughness: 0.7 });
   const windowMaterial = new THREE.MeshStandardMaterial({
     color: COLORS.sand,
     emissive: COLORS.gold,
     emissiveIntensity: 0,
     roughness: 0.6,
   });
-  const materials = [cream, sand, soil, rockMaterial, stone, roof, seedMaterial, windowMaterial];
+  const materials = [cream, sand, soil, rockMaterial, stone, roof, huskMaterial, seamMaterial, rootMaterial, windowMaterial];
 
   // Windowsill under the tray.
   const sill = new THREE.Mesh(new THREE.BoxGeometry(260, 2, 160), sand);
@@ -101,10 +156,7 @@ export function createGraybox(): Graybox {
   soilMesh.position.y = -0.5; // top face at y = 0
   soilMesh.name = "soil";
 
-  const seed = new THREE.Mesh(new THREE.SphereGeometry(0.7, 16, 12), seedMaterial);
-  seed.scale.set(1, 0.7, 0.8);
-  seed.position.set(0, 0.35, 0);
-  seed.name = "seed";
+  const seed = createSeed(huskMaterial, seamMaterial, rootMaterial);
 
   const rocks = new THREE.Group();
   rocks.name = "rocks";

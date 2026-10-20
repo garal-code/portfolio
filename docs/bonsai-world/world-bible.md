@@ -93,19 +93,25 @@ Copy comes from `src/data/resume.ts`; no new facts are invented.
 
 Each annotation in chapter 4 mirrors a DOM list item, so the career is readable without WebGL.
 
-## 5. Camera ledger (starting values, proven at Gate 2)
+## 5. Camera ledger (Gate 2 corrections: pulled back, S6)
+
+The Gate 2 graybox sat too close to its subject in every chapter. Every camera is now 1.3x to 2.7x further from its target (desktop and mobile), and the table below is the new set of endpoints. Pull-back per chapter: `seed` and `sprout` 1.35x; `branches` 1.4x to 1.8x (1.4x extra on mobile); `pagoda` 1.6x desktop, 1.35x mobile (top tier in frame); `trunk` 2.7x desktop, 2.6x mobile (the whole trunk and its wire in frame, target raised to y 22); `pruning` 2.5x desktop, 3.1x mobile (the crown); `finished` 1.35x desktop, 1.45x mobile (the whole tree in frame).
 
 | Chapter | Position | Target | FOV | Mobile override | Failure risk |
 |---|---|---|---:|---|---|
-| `seed` | `[0, 6, 22]` | `[0, 0.5, 0]` | 35 | `[0, 9, 30]`, 46 | Seed too small to read |
-| `sprout` | `[-8, 4, 16]` | `[0, 3, 0]` | 34 | `[-6, 7, 24]`, 46 | Near-plane clipping on moss |
-| `trunk` | `[10, 14, 24]` | `[0, 12, 0]` | 36 | `[8, 16, 34]`, 48 | Wire hidden behind trunk |
-| `branches` | `[-6, 26, 40]` with 4 sub-stops | `[0, 8 → 38, 0]` | 38 | Pull back 25% | Callouts overlap foliage |
-| `pruning` | `[14, 34, 30]` | `[0, 32, 0]` | 34 | `[10, 36, 42]`, 46 | Falling twigs read as glitches |
-| `pagoda` | `[-20, 8, 26]` | `[-14, 5, 0]` | 32 | `[-18, 10, 36]`, 44 | Pagoda off-frame on tall screens |
-| `finished` | `[0, 30, 95]` | `[0, 18, 0]` | 32 | `[0, 34, 130]`, 42 | Empty space on wide screens |
+| `seed` | `[0, 8, 30]` | `[0, 0.5, 0]` | 35 | `[0, 12, 40]`, 46 | Seed too small to read |
+| `sprout` | `[-10, 5.5, 22]` | `[0, 3, 0]` | 34 | `[-8, 9.5, 32]`, 46 | Near-plane clipping on moss |
+| `trunk` | `[28, 32, 64]` | `[0, 22, 0]` | 36 | `[22, 30, 87]`, 50 | Wire hidden behind trunk |
+| `branches` | 4 sub-stops: `[-48, 24, 57.6]`, `[-9, 27, 60]`, `[-10.8, 28, 72]`, `[-8.4, 29.6, 56]` | `[0, 8 → 38, 0]` | 38 | `[-67.2, 30.4, 80.6]`, `[-12.6, 30.6, 84]`, `[-15.1, 28, 100.8]`, `[-11.8, 26.2, 78.4]`, 46 | Callouts overlap foliage; the first branch points at the camera |
+| `pruning` | `[35, 40, 75]` | `[0, 32, 0]` | 34 | `[31, 50, 130]`, 46 | Falling twigs read as glitches |
+| `pagoda` | `[-24, 12, 42.5]` | `[-14, 7, 0]` | 32 | `[-19.5, 11, 49]`, 44 | Pagoda off-frame on tall screens |
+| `finished` | `[0, 34, 128]` | `[0, 18, 0]` | 32 | `[0, 41, 188]`, 42 | Empty space on wide screens |
 
-Path: Catmull-Rom position and target curves between endpoints, with FOV interpolated per segment. A debug route draws the path, frustums and chapter labels.
+Gate 2 values, for reference: `seed` `[0, 6, 22]`, `sprout` `[-8, 4, 16]`, `trunk` `[10, 14, 24]` to `[0, 12, 0]`, `branches` `[-6, 20 → 32, 40]`, `pruning` `[14, 34, 30]`, `pagoda` `[-20, 8, 26]` to `[-14, 5, 0]`, `finished` `[0, 30, 95]`.
+
+Composition: the renderer shifts the lens (`setViewOffset`) so each target is drawn inside the copy-free area, at 66% of the width on desktop (the copy owns the left 40%) and at 27.5% of the height on mobile (the copy owns the bottom 45%). The fit tests check each landmark against that area at 1440x900 and 390x844.
+
+Path: Catmull-Rom position and target curves between endpoints, with FOV interpolated per segment. A clearance guard keeps the damped camera at least 8 units from the trunk, branches and foliage after fast jumps. A debug route draws the path, frustums and chapter labels.
 
 ## 6. Growth technique (the core risk)
 
@@ -114,7 +120,7 @@ Static bonsai models cannot grow, so the tree is **generated in code once** (see
 - Each branch segment carries `aBirth` and `aDeath` (0–1 growth time) and `aBranchId`.
 - The vertex shader scales each segment from its parent attachment point by `smoothstep(aBirth, aBirth + span, uGrowth)`. Leaf pads fade and scale in by their own birth time.
 - Pruned twigs have `aDeath < 1`. They shrink away, and an instanced falling-twig particle plays at that moment.
-- The wire is a tube geometry along the trunk curve, revealed by a draw-range or clip progress.
+- The wire is a tube geometry along the trunk curve, drawn by a draw range across the trunk window and held through the branches. During `pruning` it unwinds in reverse, from the top down, and is fully gone at growth 1; reverse scroll puts it back.
 - `uGrowth` derives from exact scroll progress, so growth is fully reversible and identical after a reload.
 
 The generator is decided by a spike at Gate 2:
