@@ -132,19 +132,23 @@ The generator is decided by a spike at Gate 2:
 
 ## 7. Material, texture and asset ledger
 
-Every source below is free. Licenses must be confirmed again at download time.
+Assets in use (Gate 3, downloaded 2026-10-21). Every file is listed with author, license and source in `public/bonsai/CREDITS.md`. Total: 4.5 MB.
 
-| Asset | Source (candidate) | License | Treatment |
+| Asset | Source | License | Treatment |
 |---|---|---|---|
-| Bark | Poly Haven / ambientCG bark sets, or ez-tree bark (1K color, normal, roughness) | CC0 (ez-tree: to verify) | 1K atlas, KTX2 |
-| Moss and mossy rocks | Poly Haven `mossy_rock` texture, `rock_moss_set_01` model | CC0 | Decimate the 34 MB source, Draco/Meshopt, KTX2 1K |
-| Foliage | Leaf-card alpha atlas (ez-tree or Poly Haven) | CC0 / to verify | 1K atlas, alphaTest 0.4–0.5, 3 hue clusters |
-| Ceramic tray | Procedural lathe geometry | n/a | Cream glaze, roughness ~0.35, clearcoat |
-| Soil and stairs | Procedural plus Poly Haven ground texture | CC0 | Shared tiling material |
-| Pagoda and lanterns | To source (CC0 GLB) or model simply | to verify | Dark tiled roof; windows and lanterns emissive gold |
+| Bark (trunk and branches) | Poly Haven `japanese_zelkova_bark` | CC0 | 1K diffuse, normal and roughness as re-encoded JPEG; UV repeat follows limb radius (`surfaces.ts`) |
+| Soil and moss clumps | Poly Haven `forrest_ground_01` | CC0 | 1K diffuse, 512 normal and roughness; the moss clumps reuse it with a green tint and world-space UVs |
+| Mossy rocks | Poly Haven `rock_moss_set_01` (glTF 1K) | CC0 | Unmodified model; its roughness map also textures the stone platform, stairs and lanterns (its normal map does not, because it tilted box faces toward the sky) |
+| Pagoda roof | Poly Haven `grey_roof_tiles_02` | CC0 | 512 maps. `ceramic_roof_01` was rejected because its terracotta red breaks the palette |
+| Reflections | Poly Haven `belfast_sunset_puresky` (1K HDR) | CC0 | `scene.environment` only, never the background |
+| Foliage | Procedural leaf clusters | n/a | Natural greens from §3 |
+| Ceramic tray | Procedural lathe geometry | n/a | Cream glaze, roughness 0.35, clearcoat 0.6 |
+| Windowsill | Procedural box | n/a | Warm light oak `#c9b48e`, roughness 0.85 |
+| Pagoda walls and lanterns | Procedural | n/a | Plaster and stone; windows emissive gold |
 | Wire | Procedural tube | n/a | Copper, metalness 1, roughness ~0.4 |
-| Lighting environment | Poly Haven interior HDRI with a window | CC0 | 1K for lighting, blurred plate for the background |
-| Shape references only | Polyy.AI bonsai pack (CC0, ~54k tris, 25 styles), Grab3D bonsai (CC0, 11k tris) | CC0 | Not used in the scene, because they cannot grow |
+| Shape references only | Polyy.AI bonsai pack, Grab3D bonsai (both CC0) | CC0 | Not used in the scene, because they cannot grow |
+
+KTX2 and Draco compression are deferred to T6, because no encoder is installed.
 
 Color space: color and emissive maps in sRGB; normal, roughness and AO maps linear.
 
@@ -152,12 +156,17 @@ Color space: color and emissive maps in sRGB; normal, roughness and AO maps line
 
 | System | Chapters | Intensity | Shadow | Purpose | Fallback |
 |---|---|---|---|---|---|
-| Sun key light (directional, aligned with the visible sun) | all | 2.4 → 0.6 (fades at dusk); color white-warm → gold | 2048 desktop, 1024 mobile, tight frustum around the tray; shadows lengthen as the sun lowers | Form, time of day, backlight at golden hour | Baked gradient |
-| Sun disc and sky dome | all | Disc plus soft glow; sky gradient follows sun height | none | The visible setting sun | Static gradient |
-| HDRI environment | all | 0.5 → 0.25 | none | Reflections on glaze and wire | Hemisphere light |
-| Lanterns and pagoda windows | 6–7 | Emissive ~1.8 plus 2–3 small point lights | none | Dusk warmth in gold | Emissive plus glow sprite |
-| Haze / dust in the light shaft | 1–5 | Low density | n/a | Depth and atmosphere | Off on the low tier |
-| Bloom | 5–7 | Restrained, only on the sun disc and gold emissives | n/a | Sun and lantern glow | Off on the low tier |
+| Sun key light (directional, aligned with the visible sun) | all | 2.4 → 0.6 (fades at dusk); color `#fff1de` → `#eeae3c` | 2048 desktop, 1024 mobile, tight frustum around the tray; light elevation never below 6°, so it does not graze the tray | Form, time of day, backlight at golden hour | Baked gradient |
+| Sun disc and sky dome | all | Disc radius 2.2° plus soft glow; zenith, horizon and ground colors per chapter (`chapters.ts`) | none | The visible setting sun, over soft hill silhouettes | Static gradient |
+| Hemisphere fill | all | 0.65–0.7; sky color is the zenith pulled 85% toward the warm horizon | none | Shade fill without a lilac cast | — |
+| HDRI environment | all | 0.07 → 0.19, following key intensity | none | Reflections on glaze and wire | Hemisphere light |
+| Lanterns and pagoda windows | 6–7 | Windows emissive 2.2; point glows 20 | none | Dusk warmth in gold | Emissive plus glow sprite |
+| Tone mapping | all | ACES Filmic, exposure 1.05 | n/a | Palette reads under HDR | — |
+| Bloom | all, grows at dusk | Desktop only; threshold 1.25, radius 0.55, strength 0.16 → 0.5 | n/a | Sun disc and lantern glow, without washing out the walls | Off on mobile |
+
+Sun path per chapter (azimuth in degrees from −z toward +x, elevation in degrees): `seed` 22 / 62, `sprout` 20 / 58, `trunk` 15 / 48, `branches` 4 / 24, `pruning` −14 / 2.5, `pagoda` 8 / 0.8, `finished` 7 / −3.5. Azimuth is tuned per camera so the disc lands on the right of the frame; tests in `tests/bonsai/sun.test.ts` enforce it.
+
+Measured on a desktop GPU at 1440×900 (Gate 3): 60 fps, 92–106 draw calls, ~178k triangles, 31 textures. At 390×844: 60 fps, 82–92 draw calls, 137k–165k triangles, 19 textures. Mobile `finished` is 2 calls over the 90 budget; T6 handles it, and a real-device check is still pending.
 
 ## 9. Interaction matrix
 
