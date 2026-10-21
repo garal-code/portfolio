@@ -23,10 +23,8 @@ export interface ConductorState {
   growth: number;
 }
 
+/** Practical lights. The sun, sky and key light live in sun.ts. */
 export interface WorldState {
-  sky: number;
-  key: number;
-  keyIntensity: number;
   lanterns: number;
 }
 
@@ -201,28 +199,22 @@ export function createCameraPath(
   return { waypoints, at };
 }
 
-function lerpHex(a: number, b: number, t: number): number {
-  const channel = (shift: number) =>
-    Math.round(lerp((a >> shift) & 0xff, (b >> shift) & 0xff, t)) << shift;
-  return channel(16) | channel(8) | channel(0);
-}
-
-/** Sky, key light and lantern state, interpolated between chapter centres. */
-export function worldAt(rawProgress: number, chapters: readonly Chapter[] = CHAPTERS): WorldState {
-  const progress = clamp01(rawProgress);
+/** Progress of each chapter's centre (first and last chapters sit at the ends): where world state lands. */
+export function chapterAnchors(chapters: readonly Chapter[] = CHAPTERS): number[] {
   const spans = chapterSpans(chapters);
-  const anchors = spans.map((span, index) =>
+  return spans.map((span, index) =>
     index === 0 ? 0 : index === spans.length - 1 ? 1 : (span.start + span.end) / 2,
   );
+}
+
+/** Lantern and pagoda practicals, interpolated between chapter centres. */
+export function worldAt(rawProgress: number, chapters: readonly Chapter[] = CHAPTERS): WorldState {
+  const progress = clamp01(Number.isFinite(rawProgress) ? rawProgress : 0);
+  const anchors = chapterAnchors(chapters);
   let index = 0;
   while (index < anchors.length - 2 && progress >= anchors[index + 1]!) index += 1;
   const a = chapters[index]!.light;
   const b = chapters[index + 1]!.light;
   const t = smooth(clamp01((progress - anchors[index]!) / (anchors[index + 1]! - anchors[index]!)));
-  return {
-    sky: lerpHex(a.sky, b.sky, t),
-    key: lerpHex(a.key, b.key, t),
-    keyIntensity: lerp(a.keyIntensity, b.keyIntensity, t),
-    lanterns: lerp(a.lanterns, b.lanterns, t),
-  };
+  return { lanterns: lerp(a.lanterns, b.lanterns, t) };
 }

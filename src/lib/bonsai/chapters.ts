@@ -15,11 +15,24 @@ export interface GrowthWindow {
   to: number;
 }
 
-/** Sky and key light of a chapter; the world interpolates between chapters. */
+/** Sky gradient colours (sRGB hex): overhead, at the horizon haze, and the distant hills. */
+export interface SkyColors {
+  zenith: number;
+  horizon: number;
+  ground: number;
+}
+
+/**
+ * Setting-sun keyframe of a chapter (world bible section 3 and 8). Angles are in
+ * degrees: azimuth is measured from -z (behind the tree) towards +x, elevation
+ * from the horizon. The world interpolates between chapter centres (sun.ts).
+ */
 export interface ChapterLight {
-  sky: number;
+  azimuth: number;
+  elevation: number;
   key: number;
   keyIntensity: number;
+  sky: SkyColors;
   lanterns: number;
 }
 
@@ -94,9 +107,14 @@ const branchStops: readonly CameraPose[] = BRANCH_BASE.map((stop, index) =>
   pullBack(stop, BRANCH_PULL[index]!, 38),
 );
 
-const DAYLIGHT = { sky: 0xdfe6df, key: 0xf2f5f7 };
-const GOLDEN = { sky: 0xe8d9b4, key: 0xffd08a };
-const DUSK = { sky: 0x1b3a33, key: 0x9db3c7 };
+// Sun path. The camera poses are approved, so the sun azimuth is tuned to them:
+// `pruning` is seen from the right (x +35, looking back along -x), which puts the
+// sun at a negative azimuth there; `pagoda` and `finished` look straight back, so
+// it returns to the right of the axis. Elevation falls through the whole story:
+// high (1-3), low gold (pruning), touching the horizon (pagoda), just below it (finished).
+// Every sky and key colour stays in the white-warm to gold family, never red.
+const DAY_SKY: SkyColors = { zenith: 0xb4cadb, horizon: 0xe4eae3, ground: 0x9db0a2 };
+const DAY_KEY = 0xfff1de;
 
 // Growth windows are contiguous. The tree is complete at the end of `pruning`,
 // so `pagoda` and `finished` hold growth at 1 while the camera and light move on.
@@ -107,7 +125,7 @@ export const CHAPTERS: readonly Chapter[] = [
     growth: { from: 0, to: 0.02 },
     stops: [seedPose],
     mobileStops: [mobile(seedPose, [0, 12, 40], 46)],
-    light: { ...DAYLIGHT, keyIntensity: 2.4, lanterns: 0 },
+    light: { azimuth: 22, elevation: 62, key: DAY_KEY, keyIntensity: 2.4, sky: DAY_SKY, lanterns: 0 },
   },
   {
     id: "sprout",
@@ -115,7 +133,7 @@ export const CHAPTERS: readonly Chapter[] = [
     growth: { from: 0.02, to: 0.14 },
     stops: [sproutPose],
     mobileStops: [mobile(sproutPose, [-8, 9.5, 32], 46)],
-    light: { ...DAYLIGHT, keyIntensity: 2.4, lanterns: 0 },
+    light: { azimuth: 20, elevation: 58, key: DAY_KEY, keyIntensity: 2.4, sky: DAY_SKY, lanterns: 0 },
   },
   {
     id: "trunk",
@@ -123,7 +141,7 @@ export const CHAPTERS: readonly Chapter[] = [
     growth: { from: 0.14, to: 0.4 },
     stops: [trunkPose],
     mobileStops: [mobile(trunkPose, [22, 30, 87], 50)],
-    light: { ...DAYLIGHT, keyIntensity: 2.2, lanterns: 0 },
+    light: { azimuth: 15, elevation: 48, key: 0xfff0da, keyIntensity: 2.2, sky: DAY_SKY, lanterns: 0 },
   },
   {
     id: "branches",
@@ -131,7 +149,14 @@ export const CHAPTERS: readonly Chapter[] = [
     growth: { from: 0.4, to: 0.8 },
     stops: branchStops,
     mobileStops: branchStops.map((stop) => pullBack(stop, 1.4, 46)),
-    light: { ...DAYLIGHT, keyIntensity: 2.0, lanterns: 0 },
+    light: {
+      azimuth: 4,
+      elevation: 24,
+      key: 0xffe6bd,
+      keyIntensity: 1.9,
+      sky: { zenith: 0xa9c0d0, horizon: 0xeae4d0, ground: 0x8ea28f },
+      lanterns: 0,
+    },
   },
   {
     id: "pruning",
@@ -139,7 +164,14 @@ export const CHAPTERS: readonly Chapter[] = [
     growth: { from: 0.8, to: 1 },
     stops: [pruningPose],
     mobileStops: [mobile(pruningPose, [31, 50, 130], 46)],
-    light: { ...GOLDEN, keyIntensity: 1.6, lanterns: 0 },
+    light: {
+      azimuth: -14,
+      elevation: 2.5,
+      key: 0xffc874,
+      keyIntensity: 1.4,
+      sky: { zenith: 0x86a1ac, horizon: 0xf0cf8e, ground: 0x56624f },
+      lanterns: 0,
+    },
   },
   {
     id: "pagoda",
@@ -147,7 +179,14 @@ export const CHAPTERS: readonly Chapter[] = [
     growth: { from: 1, to: 1 },
     stops: [pagodaPose],
     mobileStops: [mobile(pagodaPose, [-19.5, 11, 49], 44)],
-    light: { ...DUSK, keyIntensity: 0.9, lanterns: 1 },
+    light: {
+      azimuth: 8,
+      elevation: 0.8,
+      key: 0xf3b94c,
+      keyIntensity: 0.9,
+      sky: { zenith: 0x1b3f3b, horizon: 0xe8b04e, ground: 0x153229 },
+      lanterns: 1,
+    },
   },
   {
     id: "finished",
@@ -155,7 +194,14 @@ export const CHAPTERS: readonly Chapter[] = [
     growth: { from: 1, to: 1 },
     stops: [finishedPose],
     mobileStops: [mobile(finishedPose, [0, 41, 188], 42)],
-    light: { sky: 0x0b2620, key: DUSK.key, keyIntensity: 0.6, lanterns: 1 },
+    light: {
+      azimuth: 7,
+      elevation: -3.5,
+      key: 0xeeae3c,
+      keyIntensity: 0.6,
+      sky: { zenith: 0x0b2620, horizon: 0xc08a36, ground: 0x08201b },
+      lanterns: 1,
+    },
   },
 ];
 
