@@ -56,7 +56,9 @@ The DOM keeps the `DESIGN.md` tokens unchanged. The 3D world uses the same hue f
 
 Forbidden: red or vermilion (the skill's Kage demo owns that look), purple, neon.
 
-**Color arc:** chapters 1–4 use soft window daylight (neutral, slightly cool), chapter 5 golden hour, and chapters 6–7 dusk lit by gold practicals.
+**Color arc:** chapters 1–4 use soft daylight (neutral, slightly cool), chapter 5 golden hour, and chapters 6–7 dusk lit by gold practicals.
+
+**The setting sun** (added 2026-10-21) drives the color arc. A visible sun descends on the right side of the sky, opposite the copy column, from high and white-warm in chapters 1–3, through low gold in `pruning`, to touching the horizon in `pagoda` and just below it in `finished`, leaving a gold-to-forest afterglow. The sun disc, the sky gradient, the key light direction, its color and its shadows are one system driven by the same scroll value, so light always comes from where the sun is. The sun is gold (`{colors.gold}` family) at its lowest, never red or vermilion. The background is a procedural sky dome with a distant low silhouette line instead of an interior window, so the sun can be seen; the HDRI only provides reflections.
 
 ### Lens and composition
 
@@ -150,11 +152,12 @@ Color space: color and emissive maps in sRGB; normal, roughness and AO maps line
 
 | System | Chapters | Intensity | Shadow | Purpose | Fallback |
 |---|---|---|---|---|---|
-| Window key light (directional) | all | 2.4 → 0.6 (fades at dusk) | 2048 desktop, 1024 mobile, tight frustum around the tray | Form and time of day | Baked gradient |
+| Sun key light (directional, aligned with the visible sun) | all | 2.4 → 0.6 (fades at dusk); color white-warm → gold | 2048 desktop, 1024 mobile, tight frustum around the tray; shadows lengthen as the sun lowers | Form, time of day, backlight at golden hour | Baked gradient |
+| Sun disc and sky dome | all | Disc plus soft glow; sky gradient follows sun height | none | The visible setting sun | Static gradient |
 | HDRI environment | all | 0.5 → 0.25 | none | Reflections on glaze and wire | Hemisphere light |
 | Lanterns and pagoda windows | 6–7 | Emissive ~1.8 plus 2–3 small point lights | none | Dusk warmth in gold | Emissive plus glow sprite |
 | Haze / dust in the light shaft | 1–5 | Low density | n/a | Depth and atmosphere | Off on the low tier |
-| Bloom | 6–7 | Restrained, only on gold emissives | n/a | Lantern glow | Off on the low tier |
+| Bloom | 5–7 | Restrained, only on the sun disc and gold emissives | n/a | Sun and lantern glow | Off on the low tier |
 
 ## 9. Interaction matrix
 
