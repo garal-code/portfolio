@@ -1,6 +1,6 @@
 ---
 import Layout from "../layouts/Layout.astro";
-import BonsaiWorld from "../components/bonsai/BonsaiWorld.astro";
+import BonsaiVideo from "../components/bonsai/BonsaiVideo.astro";
 import { careerOrder } from "../lib/bonsai/career.ts";
 import { CHAPTERS, type ChapterId } from "../lib/bonsai/chapters.ts";
 import {
@@ -12,8 +12,8 @@ import {
   skills,
 } from "../data/resume.ts";
 
-// Graybox page (Gate 2): one section per chapter, in the approved S3 order.
-// Section height follows the chapter scrollWeight; the canvas is fixed behind.
+// One section per chapter, in the approved S3 order. Section height follows the
+// chapter scrollWeight; the scroll-scrubbed video (S9) is fixed behind.
 const weight = (id: ChapterId) =>
   CHAPTERS.find((chapter) => chapter.id === id)!.scrollWeight;
 const sectionStyle = (id: ChapterId) =>
@@ -26,7 +26,7 @@ const careerJobs = careerOrder(jobs);
 const careerSlice = weight("branches") / careerJobs.length;
 
 // Below md the card is compact and pinned to the bottom of the viewport (the
-// copy safe zone, ~45%), so the 3D scene stays visible above it. A max-height
+// copy safe zone, ~45%), so the video stays visible above it. A max-height
 // with internal scroll keeps it from growing over the scene when its content
 // grows later (S7). From md up it is the 40% left column.
 //
@@ -38,7 +38,7 @@ const sectionClass =
   "relative z-10 flex min-h-[var(--chapter-height)] items-end px-4 py-3 md:items-center md:px-16 md:py-10";
 const firstExtra = "max-md:min-h-[calc(var(--chapter-height)+100svh)]";
 const panelClass =
-  "sticky bottom-3 max-h-[42svh] w-full overflow-y-auto rounded-2xl border border-forest/10 bg-cream/90 p-4 backdrop-blur-sm md:static md:max-h-none md:max-w-[40%] md:overflow-visible md:bg-cream/85 md:p-6";
+  "sticky bottom-3 max-h-[42svh] w-full overflow-y-auto rounded-2xl border border-forest/10 bg-cream/95 p-4 backdrop-blur-md md:static md:max-h-none md:max-w-[40%] md:overflow-visible md:bg-cream/92 md:p-6";
 const eyebrowClass =
   "text-xs font-bold uppercase tracking-[0.2em] text-sage-dark";
 const titleClass =
@@ -54,7 +54,7 @@ const chipClass = "rounded-full bg-sand px-2.5 py-0.5 md:px-3 md:py-1";
   title={`Bonsai — ${personalInfo.name}`}
   description={personalInfo.summary}
 >
-  <BonsaiWorld />
+  <BonsaiVideo />
 
   <section
     id="seed"
@@ -137,6 +137,7 @@ const chipClass = "rounded-full bg-sand px-2.5 py-0.5 md:px-3 md:py-1";
       {
         careerJobs.map((job, index) => (
           <li
+            data-branch-stop={index}
             class="flex items-end py-3 md:items-center md:py-10"
             style={`min-height: calc(${careerSlice} * 100svh);`}
           >

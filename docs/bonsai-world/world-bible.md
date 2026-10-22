@@ -95,7 +95,40 @@ Copy comes from `src/data/resume.ts`; no new facts are invented.
 
 Each annotation in chapter 4 mirrors a DOM list item, so the career is readable without WebGL.
 
-## 5. Camera ledger (Gate 2 corrections: pulled back, S6)
+## Video background (S9)
+
+The page background is the user's Blender render, scrubbed by scroll, instead of the real-time world (L17, L21). Sections 5 to 8 describe the Three.js world and are **superseded by the video for `/bonsai`**; they stay for reference. Chapters, copy, cards, the 40% left copy column and the mobile bottom cards are unchanged.
+
+**Asset.** `public/bonsai/video/bonsai-720p.mp4`: 1280x720, 30 fps, 20.0 s, 600 frames, H.264, a keyframe every 10 frames, no audio, 7.0 MB. `poster.jpg` is frame 0. This is the preview; the final 1080p render replaces it under a new name. The path lives in one constant, `VIDEO_SRC` in `src/lib/bonsai/video.ts`. Seeking needs byte-range responses (`206`) from the host.
+
+**Chapter to video time.** The mapping uses real scroll pixels, not weight-space progress, because scroll is `scrollY / (documentHeight - viewportHeight)` and the mobile first section carries an extra screen of spacer. The client measures, from the DOM, the `scrollY` at which each chapter section and each career card (`data-branch-stop`) is centred in the viewport, clamped to `[0, maxScroll]`. A pure function (`createVideoTimeMap` in `video.ts`) interpolates piecewise-linearly between those positions and the video times below: scrollTop 0 is 0 s, `maxScroll` is the last frame (19.97 s), and one scroll position always gives one time, forward or backward. It re-measures on resize (ignoring the touch URL-bar resize), on `load`, when fonts are ready, and through a `ResizeObserver` on `<main>`.
+
+| Chapter | Video time | What the video shows |
+|---|---|---|
+| `seed` | 0.8 s | The seed (seed phase 0 to 1.5 s) |
+| `sprout` | 2.2 s | First sprout |
+| `trunk` | 4.4 s | Young tree with the pagoda, wire on the trunk (trunk grows 1.0 to 9.8 s) |
+| `branches` 1 / 2 / 3 / 4 | 6.4 / 7.5 / 8.6 / 9.6 s | One stop per job, oldest first, at the middle of its slice; the 6 video branches start growing at 4.5, 5.1, 5.5, 5.9, 6.5 and 7.2 s and finish by 10.6 s |
+| `branches` (middle) | 8.05 s | Between stops 2 and 3 |
+| `pruning` | 12.8 s | Torii at golden hour (12 to 14 s) |
+| `pagoda` | 15.6 s | Lit pagoda at sunset (lights ramp 14.6 to 16 s) |
+| `finished` | 19.97 s | Lanterns (~17 s) into night (~19 s). It is the last section, so centring it is `maxScroll`: it holds the last frame |
+
+The branch stop times come from the Blender scene: `BRANCH_DEFS` start times are `time_when_front(u0 + 0.035)` on the trunk front `T_TRUNK0..T_TRUNK1` = 1.0 to 9.8 s, each branch grows for 3.4 s, and the four stops are spread through that growth so a new job reads as a new branch.
+
+**Scrubbing rules** (`scrub.ts`, `video-mount.ts`).
+- The video never plays. Scroll sets a target time; a frame loop moves the video to it. A move over 0.75 s (a fast jump such as `finished` to `pagoda`) is one seek straight to the target; a smaller move is eased (damping 14 per second, settles in ~300 ms).
+- At most one seek is in flight (`seeking` blocks the next one; `seeked` wakes the loop), and a seek smaller than half a frame (1/60 s) is skipped.
+- The loop sleeps when the video has settled (`loop.ts`), and pauses while the tab is hidden.
+- `video.load()` runs on mount. The first pointer or touch does one muted `play()` followed at once by `pause()` to unlock seeking on iOS Safari. Nothing else calls `play()`.
+- Reloading at depth snaps to the exact time instead of travelling from 0.
+- Framing: `object-fit: cover`; `object-position` 62% 50% on desktop and 60% 50% below 768px (the tree sits at ~0.58 of the frame width in the branches phase), so the right and centre (the tree) stay in view. A forest-deep gradient scrim sits behind the copy column (left on desktop, bottom on mobile); cards are cream at 92% to 95% with a backdrop blur, and body, forest and ink text keep 4.5:1 even over a black frame.
+
+**Reduced motion and fallback.**
+- `prefers-reduced-motion: reduce`: no damping and no continuous scrubbing. The video jumps to the anchor time of the active chapter (active once its section top crosses the viewport centre), so each chapter shows one still.
+- The poster is the background of the container, so it shows until the first frame is decoded (`loadeddata`) and stays if the video errors, cannot load, or JavaScript is off. The scrubber never throws; errors only leave the poster on screen.
+
+## 5. Camera ledger (Gate 2 corrections: pulled back, S6) — superseded by the video, kept for reference
 
 The Gate 2 graybox sat too close to its subject in every chapter. Every camera is now 1.3x to 2.7x further from its target (desktop and mobile), and the table below is the new set of endpoints. Pull-back per chapter: `seed` and `sprout` 1.35x; `branches` 1.4x to 1.8x (1.4x extra on mobile); `pagoda` 1.6x desktop, 1.35x mobile (top tier in frame); `trunk` 2.7x desktop, 2.6x mobile (the whole trunk and its wire in frame, target raised to y 22); `pruning` 2.5x desktop, 3.1x mobile (the crown); `finished` 1.35x desktop, 1.45x mobile (the whole tree in frame).
 
@@ -115,7 +148,7 @@ Composition: the renderer shifts the lens (`setViewOffset`) so each target is dr
 
 Path: Catmull-Rom position and target curves between endpoints, with FOV interpolated per segment. A clearance guard keeps the damped camera at least 8 units from the trunk, branches and foliage after fast jumps. A debug route draws the path, frustums and chapter labels.
 
-## 6. Growth technique (the core risk)
+## 6. Growth technique (the core risk) — superseded by the video, kept for reference
 
 Static bonsai models cannot grow, so the tree is **generated in code once** (seeded) as the final shape, and scroll reveals it:
 
@@ -130,7 +163,7 @@ The generator is decided by a spike at Gate 2:
 - **`@dgreenheck/ez-tree`**: an existing Three.js generator with bark and leaf textures, levels, taper, gnarliness and wind. It has no per-branch birth attribute and no bonsai preset, so it would need a fork or post-processing of its geometry. License still to be verified.
 - **Custom generator**: full control over the bonsai silhouette (moyogi curve, foliage pads) and the growth attributes. More code to write.
 
-## 7. Material, texture and asset ledger
+## 7. Material, texture and asset ledger — superseded by the video, kept for reference
 
 Assets in use (Gate 3, downloaded 2026-10-21). Every file is listed with author, license and source in `public/bonsai/CREDITS.md`. Total: 4.5 MB.
 
@@ -152,7 +185,7 @@ KTX2 and Draco compression are deferred to T6, because no encoder is installed.
 
 Color space: color and emissive maps in sRGB; normal, roughness and AO maps linear.
 
-## 8. Lighting and atmosphere ledger
+## 8. Lighting and atmosphere ledger — superseded by the video, kept for reference
 
 | System | Chapters | Intensity | Shadow | Purpose | Fallback |
 |---|---|---|---|---|---|
