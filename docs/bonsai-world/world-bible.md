@@ -54,7 +54,7 @@ The DOM keeps the `DESIGN.md` tokens unchanged. The 3D world uses the same hue f
 | Warm practical | `{colors.gold}` ≈ #f3b94c | Lanterns, pagoda windows and annotation lines. |
 | Story accent | `{colors.gold}` | The single accent, same rule as the DOM. |
 
-Forbidden: red or vermilion (the skill's Kage demo owns that look), purple, neon.
+Vermilion is allowed for traditional architecture in the world (pagoda, torii), as part of the aesthetic the user chose for the rendered video (2026-10-22). It stays in the background imagery: the UI accent is still gold only. Forbidden: purple, neon.
 
 **Color arc:** chapters 1–4 use soft daylight (neutral, slightly cool), chapter 5 golden hour, and chapters 6–7 dusk lit by gold practicals.
 
@@ -222,7 +222,7 @@ Quality cuts, in order: DPR, then depth of field and haze, then shadow resolutio
 1. **Generator**: ez-tree fork or custom generator (Gate 2 spike).
 2. **Pagoda source**: a CC0 model with an acceptable license and quality, or a simple custom model.
 3. **Realism on mobile**: proven at Gate 6 on a real device; if it fails the budget, mobile drops a tier before losing landmarks.
-4. **Differentiation from the Kage demo**: daylight-to-dusk instead of night, a growing tree instead of a temple, gold instead of vermilion.
+4. **Differentiation from the Kage demo**: day-to-night over a lake with a growing bonsai as the protagonist, instead of a night temple; vermilion appears only on the architecture.
 5. **Chapter copy**: short Spanish copy per chapter, written from `resume.ts`.
 
 ## 14. Approval gates

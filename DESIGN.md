@@ -398,4 +398,4 @@ Full-width gold panel, 20px radius, closing the page. A `display-sm` question on
 - A `dark` Tailwind variant is declared in `global.css`, but there is no dark theme yet. The forest band works as the dark surface for now.
 - Date ranges and the page title use an em dash (`2019 — 2023`, `Name — Title`). Keep this consistent or replace it everywhere at once.
 - There is no logo or wordmark token; the name set in `display-hero` acts as the wordmark.
-- The 3D scroll world (a growing bonsai) is specified in `docs/bonsai-world/world-bible.md`. It uses the same palette roles (forest for foliage, cream for ceramic and stone, gold for practical light and annotations) and adds natural greens for 3D only. No red or vermilion.
+- The 3D scroll world (a growing bonsai) is specified in `docs/bonsai-world/world-bible.md`. It uses the same palette roles (forest for foliage, cream for ceramic and stone, gold for practical light and annotations) and adds natural greens for the world only. Vermilion is allowed on the world's traditional architecture (pagoda, torii) but never in the UI, whose only accent remains gold.
