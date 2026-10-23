@@ -176,7 +176,9 @@ test("the page mounts BonsaiVideo and no longer mounts BonsaiWorld", () => {
 
 test("the video file name is written once in src, as a constant", () => {
   const root = new URL("../../src/", import.meta.url).pathname;
-  const hits = sources(root).filter((path) => readFileSync(path, "utf8").includes("bonsai-720p.mp4"));
+  const file = read("src/lib/bonsai/video.ts").match(/VIDEO_SRC = "[^"]*\/([^"\/]+\.mp4)"/)?.[1] ?? "";
+  assert.match(file, /\.mp4$/);
+  const hits = sources(root).filter((path) => readFileSync(path, "utf8").includes(file));
   assert.deepEqual(
     hits.map((path) => path.slice(root.length)),
     ["lib/bonsai/video.ts"],

@@ -13,7 +13,7 @@
 import type { ChapterId } from "./chapters.ts";
 
 /** The only place the video file is named: the final 1080p render swaps this. */
-export const VIDEO_SRC = "/bonsai/video/bonsai-720p.mp4";
+export const VIDEO_SRC = "/bonsai/video/bonsai-1080p.mp4";
 export const VIDEO_POSTER = "/bonsai/video/poster.jpg";
 
 export const VIDEO_DURATION = 20;
