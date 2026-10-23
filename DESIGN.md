@@ -285,7 +285,11 @@ Big type, tight blocks. Inside a block, elements sit close (10–20px gaps) so e
 
 ## Elevation & Depth
 
-The system is intentionally **flat**. There are no box shadows anywhere.
+The static pages are intentionally **flat**, with no box shadows. The one exception is the video world (`/bonsai`, see below), where cards float over moving footage and use the bubble surface.
+
+### Bubble surface (video world only)
+
+Chapter cards over the video are soft rounded bubbles: 28px radius, a 1px white rim at 65%, a cream fill (95% on mobile, 92% from `md`) with a white specular sheen near the top left, an inner top highlight, a soft inner shade at the bottom, layered forest-tinted drop shadows and an 18px backdrop blur. On hover (desktop only) the card lifts 4px with a deeper shadow; with `prefers-reduced-motion` it does not move. Chips (`bubble-chip`) and the primary call to action (`bubble-button`) share the same rim-and-shadow language at a smaller scale. Text contrast is measured against the cream fill over a black frame and stays at least 4.5:1.
 
 Depth comes from three devices:
 1. **Color blocking:** forest band vs cream canvas.
@@ -351,13 +355,13 @@ Full-width gold panel, 20px radius, closing the page. A `display-sm` question on
 - Open every page with the forest band and close it with the gold contact band.
 - Keep gold as the single accent. If something needs emphasis, make it bigger in Bricolage Grotesque before reaching for a new color.
 - Use green-tinted neutrals (ink, body, sage, meta) for text. Never pure black or neutral grey.
-- Keep surfaces flat and let color blocking create hierarchy.
+- Keep static surfaces flat and let color blocking create hierarchy. Over the video, use the bubble surface.
 - Write UI copy in Spanish, in the first person and plainly.
 - Respect `prefers-reduced-motion` in every new animation.
 
 ### Don't
 - Don't add a second accent color (no blue links, no purple gradients, no red CTAs).
-- Don't add box shadows, glassmorphism or gradient meshes.
+- Don't add box shadows, glassmorphism or gradient meshes to static pages; the bubble surface is reserved for cards over the video world.
 - Don't use Bricolage Grotesque for paragraphs or DM Sans for headlines.
 - Don't put gold text on cream or white; it fails contrast. Gold is a fill on light surfaces and a text color only on forest.
 - Don't use pure white as the page background. White is only for cards on cream.

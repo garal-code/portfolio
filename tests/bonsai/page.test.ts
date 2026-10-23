@@ -24,3 +24,14 @@ test("desktop cards keep the 40% left column", () => {
   assert.match(panel, /md:p-6/);
   assert.match(classOf("sectionClass"), /md:items-center md:px-16/);
 });
+
+test("chapter cards, chips and the call to action use the bubble surface with depth", () => {
+  assert.match(classOf("panelClass"), /(^| )bubble-card( |$)/);
+  assert.match(classOf("chipClass"), /(^| )bubble-chip( |$)/);
+  const card = page.match(/\.bubble-card\s*\{([^}]+)\}/)?.[1] ?? "";
+  assert.match(card, /border-radius:\s*(2[4-9]|3\d)px/, "large rounded corners");
+  const shadow = card.match(/box-shadow:([^;]+);/)?.[1] ?? "";
+  assert.match(shadow, /inset/, "inner highlight gives the rim of a bubble");
+  assert.ok((shadow.match(/rgb\(/g) ?? []).length >= 4, "layered shadows give depth");
+  assert.match(page, /prefers-reduced-motion:\s*reduce[\s\S]*bubble-card/, "the hover lift respects reduced motion");
+});

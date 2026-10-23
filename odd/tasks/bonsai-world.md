@@ -14,6 +14,7 @@ Current phase: Gate 2 (graybox, camera endpoints, growth generator).
 - **S7 — Richer card content (deferred).** "el contenido en tarjetas se me queda como corto nose siento que le falta algo, pero bueno eso se puede añadir despues no?"
 - **S8 — Setting sun.** "pense ayer que estaria bien tener un sol que baja tambien en un lado algo que quede bonito que vaya en conjunto con la luz". A visible sun descends on one side as the visitor scrolls, and the scene lighting follows it (world bible §3 color arc, §8).
 - **S9 — Video background (pending input).** "no la verdad que el resultado de texturas y eso no me gusta para nada estoy generando un video de unos 20 segundo cuando lo tenga te lo paso y lo podemos poner de fonde no? envez de esto". The background becomes the user's ~20 s video instead of the real-time textured world. This rewrites S2 and S4 once the video arrives.
+- **S10 — Bubble cards.** "haz las tarjeta con un estilo diferente no simples, se me ocurre con los bordes de tarjetas redondados y como con profundidad modo buble".
 - **S5 — Eye-catching.** "quiero una porfolio que llame la atencion y el que tengo no lo hace yo creo. Busco scroll-world o algo similar algo que llame la atencion".
 
 ## Tasks
@@ -31,7 +32,8 @@ Current phase: Gate 2 (graybox, camera endpoints, growth generator).
 | T9 | Scroll-scrubbed video background on `/bonsai`: scroll drives video time, chapter→video-time mapping, poster, reduced motion; replaces the Three.js island (Three.js code is removed in its own later commit after user approval) | S1, S3, S9 | worker | — |
 | T9 ✅ | (see above) | | | `cefa68f` |
 | T9d | Blender scene fixes from L23: birds enter from the top edge, a natural sprout (no green leaves at birth, no pointed trunk), and a final second with warm orange light instead of full night | S9 | inline | — |
-| T9b | Final 1080p Blender render (~5 h) and web encode | S9 | inline | — |
+| T9b ✅ | Final 1080p Blender render (~5 h) and web encode | S9 | inline | see L27 |
+| T10 ✅ | Bubble-style chapter cards: rounded, rim light, inner highlight, layered shadows | S10 | inline | see L27 |
 | T5 ✅ | Gate 3: realistic materials (PBR bark, moss, rocks, ceramic, soil) proven on the trunk chapter, plus the setting-sun lighting system across all chapters | S2, S5, S8 | worker, then parent | `0eea529`, `f8c959f` (Gate 3 user approval pending) |
 | T6 | Gates 4–6: transitions, mobile tier and performance budget | S2, S4 | pending | — |
 | T7 | Integrate into home with semantic DOM content, reduced-motion and no-WebGL fallback | S3, S5 | pending | — |
@@ -70,5 +72,13 @@ El ultimo segundo es muy oscuro completamente de noche, eso no me gusta quiero q
   - **Ending:** the sun ends at 2° above the horizon (was −2°), with intensity 0.7, orange `#ff7432`, sky strength 0.45 and exposure 0.1. The last second is a warm amber dusk with lit lanterns.
   - **Verification:** check stills at 720p/24 spp across 2–19.97 s in `.playwright-mcp/blender/sheet*.jpg`.
 - **L25** (user): "lo del alambre al final y lo del tallo sin ramas me parece bien". The wire stays on the finished tree and the bare stem at ~3.5 s is fine. The T9d stills are approved; the final 1080p render was launched (`./render.sh`, ~5 h).
+- **L26** (user): "ya he recuperado los tokens genera el video y la pagina de portfolio haz las tarjeta con un estilo diferente no simples, se me ocurre con los bordes de tarjetas redondados y como con profundidad modo buble"
+- **L27** (evidence, T9b and T10):
+  - **Render:** the final render finished 600/600 in 5 h 16 min (~31 s/frame). Frames reviewed: the sprout fix, birds from the top and the warm ending all hold.
+  - **Web video:** H.264 1080p, CRF 30, keyframe every 10 frames, no audio, 8.6 MB, at `public/bonsai/video/bonsai-1080p.mp4`, with a new poster. The 720p preview was removed.
+  - **Sync:** in Chromium every chapter center lands on its anchor exactly, at 1440×900 and 390×844, forward and back, with 0 console errors. Range requests return 206.
+  - **Cards:** `.bubble-card` (28 px radius, white rim, specular sheen, inner highlight and shade, layered shadows, 18 px blur, desktop hover lift guarded by reduced motion), plus `bubble-chip` and `bubble-button`. A new page test went RED first, then GREEN. The video test now reads the file name from `VIDEO_SRC` instead of hardcoding it. 101/101 tests pass.
+  - **Dev server:** the Astro dev server served stale page styles until it was restarted. The computed style is now confirmed at 28 px with layered shadows.
+  - **Design system:** DESIGN.md reserves the bubble surface for the video world; static pages stay flat.
 - **L9** (delivery): The branch holds 5 reviewable commits (~2.9k authored lines). Opening the PR(s) and how to split them stays the user's decision.
 - **L7** (decision): Graybox ships on a separate `/bonsai` route so the current home stays untouched until T7. Tests use the built-in `node --test` runner (Node 26 strips TypeScript natively), so no test dependency is added.
