@@ -99,7 +99,20 @@ Each annotation in chapter 4 mirrors a DOM list item, so the career is readable 
 
 The page background is the user's Blender render, scrubbed by scroll, instead of the real-time world (L17, L21). Sections 5 to 8 describe the Three.js world and are **superseded by the video for `/bonsai`**; they stay for reference. Chapters, copy, cards, the 40% left copy column and the mobile bottom cards are unchanged.
 
-**Asset.** `public/bonsai/video/bonsai-1080p.mp4`: the final Blender render (2026-10-22, Cycles, 64 samples), 1920x1080, 30 fps, 20.0 s, 600 frames, H.264 CRF 30, a keyframe every 10 frames, no audio, 8.6 MB. `poster.jpg` is frame 0 at 1280 px wide. It replaced the 720p preview. The path lives in one constant, `VIDEO_SRC` in `src/lib/bonsai/video.ts`. Seeking needs byte-range responses (`206`) from the host.
+**Asset.** `public/bonsai/video/bonsai-1080p.mp4`: the final Blender render the user approved (2026-10-22, Cycles, 64 samples; L34), 1920x1080, 30 fps, 20.0 s, 600 frames, no audio, 13.4 MB. It is re-encoded from `bonsai_blender/bonsai_scroll_world_1080p.mp4` (CRF 17 master) for scrubbing, like midudev/mcp-higgsfield-landing: H.264 CRF 28, a keyframe every 6 frames, and colour tagged BT.709 with the sRGB curve so the browser paints it like the poster:
+
+```sh
+ffmpeg -i bonsai_blender/bonsai_scroll_world_1080p.mp4 -an -c:v libx264 -preset slow -crf 28 \
+  -g 6 -keyint_min 6 -sc_threshold 0 -pix_fmt yuv420p \
+  -color_primaries bt709 -color_trc iec61966-2-1 -colorspace bt709 -color_range tv \
+  -movflags +faststart+write_colr public/bonsai/video/bonsai-1080p.mp4
+ffmpeg -i public/bonsai/video/bonsai-1080p.mp4 -frames:v 1 \
+  -vf "scale=in_color_matrix=bt709:in_range=tv:out_range=pc,format=rgb24" -q:v 4 public/bonsai/video/poster.jpg
+```
+
+`poster.jpg` is frame 0 at 1920 px wide. The path lives in one constant, `VIDEO_SRC` in `src/lib/bonsai/video.ts`.
+
+**Why `<video>` and not an image sequence (L36).** An image sequence on a canvas was tried (L30) after L29 blamed a Chromium seek ceiling. That diagnosis was wrong: counted with `requestVideoFrameCallback`, raw scroll → `currentTime` paints one frame per wheel event (17/s), while an eased target with one seek in flight paints a new frame on every refresh (~80/s), as midu's landing does. The sequence was dropped: it weighed 48 MB and the T11 sprout re-render changed frames the user had approved.
 
 **Chapter to video time.** The mapping uses real scroll pixels, not weight-space progress, because scroll is `scrollY / (documentHeight - viewportHeight)` and the mobile first section carries an extra screen of spacer. The client measures, from the DOM, the `scrollY` at which each chapter section and each career card (`data-branch-stop`) is centred in the viewport, clamped to `[0, maxScroll]`. A pure function (`createVideoTimeMap` in `video.ts`) interpolates piecewise-linearly between those positions and the video times below: scrollTop 0 is 0 s, `maxScroll` is the last frame (19.97 s), and one scroll position always gives one time, forward or backward. It re-measures on resize (ignoring the touch URL-bar resize), on `load`, when fonts are ready, and through a `ResizeObserver` on `<main>`.
 
@@ -117,10 +130,11 @@ The page background is the user's Blender render, scrubbed by scroll, instead of
 The branch stop times come from the Blender scene: `BRANCH_DEFS` start times are `time_when_front(u0 + 0.035)` on the trunk front `T_TRUNK0..T_TRUNK1` = 1.0 to 9.8 s, each branch grows for 3.4 s, and the four stops are spread through that growth so a new job reads as a new branch.
 
 **Scrubbing rules** (`scrub.ts`, `video-mount.ts`).
-- The video never plays. Scroll sets a target time; a frame loop moves the video to it. A move over 0.75 s (a fast jump such as `finished` to `pagoda`) is one seek straight to the target; a smaller move is eased (damping 14 per second, settles in ~300 ms).
+- The video never plays. Scroll sets a target time; a frame loop eases the video toward it at any distance (damping 14 per second; a 10 s jump such as `finished` to `pagoda` settles in ~0.5 s and travels through the frames in between). There is no hard jump: it left a 522 ms gap on a fast scroll (L36).
 - At most one seek is in flight (`seeking` blocks the next one; `seeked` wakes the loop), and a seek smaller than half a frame (1/60 s) is skipped.
 - The loop sleeps when the video has settled (`loop.ts`), and pauses while the tab is hidden.
-- `video.load()` runs on mount. The first pointer or touch does one muted `play()` followed at once by `pause()` to unlock seeking on iOS Safari. Nothing else calls `play()`.
+- The `<video>` has no `src` in the markup (`data-src`, `preload="none"`). On mount the file is fetched whole and handed over as a blob URL, so seeks never wait on the network (a cold load at 20 Mbps left a 223 ms gap with range requests, L36). If the fetch fails the plain URL is used; with `navigator.connection.saveData` the blob is skipped. The object URL is revoked on teardown. Until `loadeddata` only the poster shows.
+- After `loadeddata` the mount does one muted `play()` followed at once by `pause()`, because iOS Safari paints seeked frames only after one play; the first pointer or touch repeats it as a fallback. Nothing else calls `play()`.
 - Reloading at depth snaps to the exact time instead of travelling from 0.
 - Framing: `object-fit: cover`; `object-position` 62% 50% on desktop and 60% 50% below 768px (the tree sits at ~0.58 of the frame width in the branches phase), so the right and centre (the tree) stay in view. A forest-deep gradient scrim sits behind the copy column (left on desktop, bottom on mobile); cards are cream at 92% to 95% with a backdrop blur, and body, forest and ink text keep 4.5:1 even over a black frame.
 

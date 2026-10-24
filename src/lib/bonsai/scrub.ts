@@ -1,7 +1,8 @@
 // Video scrubber: eases a desired time towards the scroll target and seeks the
 // video without seek storms. DOM-free (takes a `VideoLike`), so tests drive it
 // with a fake. It never plays the video; the loop (loop.ts) calls `step`.
-// Small moves are eased; a jump over 0.75 s is one seek straight to the target.
+// Outside reduced motion the desired time is always eased towards the target,
+// at any distance, so a fast scroll travels through intermediate frames.
 
 import { VIDEO_END, VIDEO_FPS } from "./video.ts";
 
@@ -32,11 +33,9 @@ export interface Scrubber {
 }
 
 const HAVE_METADATA = 1;
-/** A target further than this from the video is reached with one seek, not eased. */
-const JUMP_SECONDS = 0.75;
 
 export function createScrubber(video: VideoLike, options: ScrubberOptions = {}): Scrubber {
-  const damping = options.damping ?? 14; // settles a sub-jump move in ~300 ms
+  const damping = options.damping ?? 14; // a 10 s jump settles in ~0.45 s at 60 Hz
   const frame = 1 / (options.fps ?? VIDEO_FPS);
   const half = frame / 2;
   let reduced = Boolean(options.reducedMotion);
@@ -62,7 +61,7 @@ export function createScrubber(video: VideoLike, options: ScrubberOptions = {}):
       // Not ready (or broken): stay idle. The mount wakes the loop on load events.
       if (video.error || video.readyState < HAVE_METADATA) return false;
       const end = goal();
-      if (reduced || Math.abs(end - video.currentTime) > JUMP_SECONDS) desired = end;
+      if (reduced) desired = end;
       else {
         desired += (end - desired) * (1 - Math.exp(-damping * dt));
         if (Math.abs(end - desired) < half) desired = end;

@@ -1,6 +1,8 @@
 ---
 // Scroll-scrubbed video background (S9). Fixed behind the chapter sections; the
 // poster shows until the first frame is decoded and stays if the video fails.
+// The element has no src: the mount fetches the file whole and sets a blob URL
+// (data-src + preload="none", so the file is not downloaded twice).
 // Scroll time mapping: lib/bonsai/video.ts (measured from the sections). Client glue: lib/bonsai/video-mount.ts.
 import { VIDEO_POSTER, VIDEO_SRC } from "../../lib/bonsai/video.ts";
 
@@ -17,11 +19,11 @@ const poster = publicUrl(VIDEO_POSTER);
   style={`background-image: url(${poster});`}
 >
   <video
-    src={src}
+    data-src={src}
     poster={poster}
     muted
     playsinline
-    preload="auto"
+    preload="none"
     disablepictureinpicture
     tabindex="-1"></video>
   <div data-bonsai-video-scrim></div>

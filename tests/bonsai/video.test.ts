@@ -190,10 +190,11 @@ test("the video file name is written once in src, as a constant", () => {
 test("the island renders a muted inline poster video behind the sections, cropped towards the subject", () => {
   const island = read("src/components/bonsai/BonsaiVideo.astro");
   const tag = island.match(/<video[\s\S]*?>/)?.[0] ?? "";
-  for (const attribute of ["muted", "playsinline", 'preload="auto"', "disablepictureinpicture", "poster="]) {
+  for (const attribute of ["muted", "playsinline", 'preload="none"', "disablepictureinpicture", "poster=", "data-src="]) {
     assert.ok(tag.includes(attribute), `video has ${attribute}`);
   }
   assert.doesNotMatch(tag, /\bautoplay\b|\bloop\b|\bcontrols\b/);
+  assert.doesNotMatch(tag, /\ssrc=/, "the element must not download the file itself; the mount fetches the blob");
   assert.match(island, /VIDEO_SRC/);
   assert.match(island, /VIDEO_POSTER/);
   assert.match(island, /object-fit:\s*cover/);
@@ -214,12 +215,284 @@ test("every branch card carries its stop index so the client can measure where i
   assert.match(mount, /getBoundingClientRect/);
 });
 
-test("play() is never called by the scrubber, only once for the iOS unlock", () => {
+test("the scrubber never plays; the mount plays only to prime or unlock, each play followed by pause", () => {
   assert.doesNotMatch(read("src/lib/bonsai/scrub.ts"), /\.play\(/);
   const mount = read("src/lib/bonsai/video-mount.ts");
-  assert.equal((mount.match(/\.play\(/g) ?? []).length, 1);
-  assert.match(mount, /\.pause\(/);
   assert.match(mount, /\.load\(/);
+  const plays = mount.match(/\.play\(/g) ?? [];
+  assert.ok(plays.length >= 1);
+  assert.equal((mount.match(/\.pause\(/g) ?? []).length - (mount.match(/loop\.pause\(/g) ?? []).length, plays.length);
+});
+
+// --- mount behaviour (fake DOM) ------------------------------------------
+
+type Listener = (event?: unknown) => void;
+
+class FakeTarget {
+  listeners = new Map<string, Set<Listener>>();
+  addEventListener(type: string, listener: Listener) {
+    if (!this.listeners.has(type)) this.listeners.set(type, new Set());
+    this.listeners.get(type)!.add(listener);
+  }
+  removeEventListener(type: string, listener: Listener) {
+    this.listeners.get(type)?.delete(listener);
+  }
+  fire(type: string) {
+    for (const listener of [...(this.listeners.get(type) ?? [])]) listener({ type });
+  }
+  count(type: string) {
+    return this.listeners.get(type)?.size ?? 0;
+  }
+}
+
+class FakeVideo extends FakeTarget {
+  srcWrites: string[] = [];
+  calls: string[] = [];
+  timeWrites: number[] = [];
+  seeking = false;
+  readyState = 0;
+  duration = 20;
+  error: unknown = null;
+  preload = "none";
+  dataset: Record<string, string> = {};
+  playRejects = false;
+  set currentTime(value: number) {
+    this.timeWrites.push(value);
+    this.seeking = true;
+  }
+  get currentTime() {
+    return this.timeWrites.at(-1) ?? 0;
+  }
+  set src(value: string) {
+    this.srcWrites.push(value);
+  }
+  get src() {
+    return this.srcWrites.at(-1) ?? "";
+  }
+  getAttribute(name: string) {
+    return name === "src" ? null : (this.dataset[name.replace(/^data-/, "")] ?? null);
+  }
+  load() {
+    this.calls.push("load");
+  }
+  play() {
+    this.calls.push("play");
+    return this.playRejects ? Promise.reject(new Error("NotAllowedError")) : Promise.resolve();
+  }
+  pause() {
+    this.calls.push("pause");
+  }
+}
+
+const SRC = "/bonsai/video/bonsai-1080p.mp4";
+const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+async function harness(options: { fetch?: (url: string) => Promise<unknown>; saveData?: boolean; dataSrc?: boolean } = {}) {
+  const g = globalThis as Record<string, unknown>;
+  const saved = new Map<string, PropertyDescriptor | undefined>();
+  const define = (name: string, value: unknown) => {
+    if (!saved.has(name)) saved.set(name, Object.getOwnPropertyDescriptor(globalThis, name));
+    Object.defineProperty(globalThis, name, { value, configurable: true, writable: true });
+  };
+
+  const frames: Array<(now: number) => void> = [];
+  const win = Object.assign(new FakeTarget(), { scrollY: 0, pageYOffset: 0, innerHeight: 900, innerWidth: 1440 });
+  const reducedQuery = Object.assign(new FakeTarget(), { matches: false });
+  Object.assign(win, {
+    matchMedia: (query: string) => (query.includes("reduced-motion") ? reducedQuery : Object.assign(new FakeTarget(), { matches: false })),
+    requestAnimationFrame: (callback: (now: number) => void) => frames.push(callback),
+    cancelAnimationFrame: () => {},
+  });
+  const doc = Object.assign(new FakeTarget(), {
+    hidden: false,
+    documentElement: { scrollHeight: 5400 },
+    fonts: undefined,
+    querySelector: () => null,
+  });
+  const created: string[] = [];
+  const revoked: string[] = [];
+  const fetched: string[] = [];
+  define("window", win);
+  define("document", doc);
+  define("requestAnimationFrame", win.requestAnimationFrame);
+  define("cancelAnimationFrame", win.cancelAnimationFrame);
+  define("navigator", { connection: { saveData: Boolean(options.saveData) } });
+  define("ResizeObserver", undefined);
+  define("fetch", async (url: string) => {
+    fetched.push(url);
+    return (options.fetch ?? (async () => ({ ok: true, blob: async () => ({ size: 8_600_000 }) })))(url);
+  });
+  const urlStatics = {
+    createObjectURL: () => {
+      const url = `blob:fake/${created.length}`;
+      created.push(url);
+      return url;
+    },
+    revokeObjectURL: (url: string) => revoked.push(url),
+  };
+  const originalCreate = URL.createObjectURL;
+  const originalRevoke = URL.revokeObjectURL;
+  URL.createObjectURL = urlStatics.createObjectURL as typeof URL.createObjectURL;
+  URL.revokeObjectURL = urlStatics.revokeObjectURL;
+
+  const video = new FakeVideo();
+  if (options.dataSrc !== false) video.dataset.src = SRC;
+  const root = {
+    dataset: {} as Record<string, string>,
+    querySelector: (selector: string) => (selector === "video" ? video : null),
+  };
+  const { mountBonsaiVideo } = await import("../../src/lib/bonsai/video-mount.ts");
+  const dispose = mountBonsaiVideo(root as unknown as HTMLElement);
+
+  const restore = () => {
+    for (const [name, descriptor] of saved) {
+      if (descriptor) Object.defineProperty(globalThis, name, descriptor);
+      else delete g[name];
+    }
+    URL.createObjectURL = originalCreate;
+    URL.revokeObjectURL = originalRevoke;
+  };
+  return { video, root, win, doc, dispose, created, revoked, fetched, frames, restore };
+}
+
+test("mount: fetches the whole clip once and hands the blob URL to the video; the poster stays until loadeddata", async () => {
+  const h = await harness();
+  try {
+    assert.deepEqual(h.fetched, [SRC]);
+    assert.deepEqual(h.video.srcWrites, [], "the plain URL is never assigned when the blob works");
+    assert.equal(h.root.dataset.state, "loading");
+    await flush();
+    assert.deepEqual(h.created.length, 1);
+    assert.deepEqual(h.video.srcWrites, [h.created[0]]);
+    assert.equal(h.video.preload, "auto");
+    assert.ok(h.video.calls.includes("load"));
+    assert.equal(h.root.dataset.state, "loading", "still the poster: no frame decoded yet");
+    h.video.fire("loadeddata");
+    assert.equal(h.root.dataset.state, "ready");
+  } finally {
+    h.dispose?.();
+    h.restore();
+  }
+});
+
+test("mount: falls back to the plain URL when fetch rejects or answers an error status", async () => {
+  for (const failing of [
+    async () => {
+      throw new Error("network");
+    },
+    async () => ({ ok: false, status: 404, blob: async () => ({}) }),
+  ]) {
+    const h = await harness({ fetch: failing });
+    try {
+      await flush();
+      assert.deepEqual(h.created, []);
+      assert.deepEqual(h.video.srcWrites, [SRC]);
+      assert.ok(h.video.calls.includes("load"));
+      assert.equal(h.root.dataset.state, "loading");
+    } finally {
+      h.dispose?.();
+      h.restore();
+    }
+  }
+});
+
+test("mount: saveData skips the blob fetch and keeps the plain src", async () => {
+  const h = await harness({ saveData: true });
+  try {
+    await flush();
+    assert.deepEqual(h.fetched, []);
+    assert.deepEqual(h.created, []);
+    assert.deepEqual(h.video.srcWrites, [SRC]);
+  } finally {
+    h.dispose?.();
+    h.restore();
+  }
+});
+
+test("mount: dispose revokes the object URL, and a fetch that lands after dispose is revoked too", async () => {
+  const h = await harness();
+  await flush();
+  h.dispose?.();
+  assert.deepEqual(h.revoked, h.created);
+  assert.equal(h.revoked.length, 1);
+  h.restore();
+
+  let release: (value: unknown) => void = () => {};
+  const late = await harness({ fetch: () => new Promise((resolve) => (release = resolve)) });
+  late.dispose?.();
+  release({ ok: true, blob: async () => ({}) });
+  await flush();
+  assert.deepEqual(late.video.srcWrites, [], "a disposed mount never touches the video");
+  assert.deepEqual(late.revoked, late.created, "nothing leaks");
+  late.restore();
+});
+
+test("mount: loadeddata primes once with play() immediately followed by pause(), and a rejected play() is caught", async () => {
+  const h = await harness();
+  try {
+    await flush();
+    h.video.playRejects = true;
+    const rejections: unknown[] = [];
+    const onRejection = (reason: unknown) => rejections.push(reason);
+    process.on("unhandledRejection", onRejection);
+    const before = h.video.calls.length;
+    h.video.fire("loadeddata");
+    assert.deepEqual(h.video.calls.slice(before), ["play", "pause"]);
+    await flush();
+    process.off("unhandledRejection", onRejection);
+    assert.deepEqual(rejections, []);
+    h.video.fire("loadeddata");
+    assert.deepEqual(h.video.calls.slice(before), ["play", "pause"], "primed only once");
+  } finally {
+    h.dispose?.();
+    h.restore();
+  }
+});
+
+test("mount: the first gesture still unlocks with play() then pause(), once, and the listeners are gone after", async () => {
+  const h = await harness();
+  try {
+    await flush();
+    const before = h.video.calls.length;
+    h.win.fire("pointerdown");
+    assert.deepEqual(h.video.calls.slice(before), ["play", "pause"]);
+    h.win.fire("touchstart");
+    h.win.fire("pointerdown");
+    assert.deepEqual(h.video.calls.slice(before), ["play", "pause"]);
+  } finally {
+    h.dispose?.();
+    h.restore();
+  }
+});
+
+test("mount: no seek while one is pending; after seeked the next seek goes out on the very next frame; a media error keeps the error state", async () => {
+  const h = await harness();
+  try {
+    await flush();
+    h.video.readyState = 4;
+    h.video.fire("loadedmetadata");
+    h.video.fire("loadeddata");
+    const runFrame = (now: number) => h.frames.splice(0).forEach((callback) => callback(now));
+    h.win.scrollY = 3000;
+    h.win.fire("scroll");
+    runFrame(1000);
+    assert.equal(h.video.timeWrites.length, 1, "first seek");
+    assert.ok(h.video.seeking);
+    runFrame(1016);
+    runFrame(1032);
+    assert.equal(h.video.timeWrites.length, 1, "no new seek while seeking");
+    h.video.seeking = false;
+    h.video.fire("seeked");
+    assert.ok(h.frames.length >= 1, "seeked keeps a frame scheduled");
+    runFrame(1048);
+    assert.equal(h.video.timeWrites.length, 2, "the next seek goes out on the very next frame");
+    assert.ok(h.video.timeWrites[1]! > h.video.timeWrites[0]!);
+    h.video.fire("error");
+    assert.equal(h.root.dataset.state, "error");
+  } finally {
+    h.dispose?.();
+    h.restore();
+  }
 });
 
 // --- readability ---------------------------------------------------------

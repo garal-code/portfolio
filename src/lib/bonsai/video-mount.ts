@@ -1,8 +1,10 @@
 // Client glue for the /bonsai video background: scroll -> video time (video.ts,
 // measured from the real section positions),
 // eased and seeked by the scrubber (scrub.ts) on the idle-aware frame loop
-// (loop.ts). The video is never played; it is only seeked. Every failure path
-// keeps the poster on screen and none throws.
+// (loop.ts). The video is only seeked; it is played just long enough to prime
+// it (play() then pause()). The clip is fetched whole and handed to the video
+// as a blob URL, so seeks never wait on range requests (plain URL on failure or
+// data saver). Every failure path keeps the poster on screen and none throws.
 
 import { createFrameLoop } from "./loop.ts";
 import { createScrollDriver } from "./scroll.ts";
@@ -44,6 +46,7 @@ function measure(): VideoTimeMap {
 export function mountBonsaiVideo(root: HTMLElement): (() => void) | undefined {
   const video = root.querySelector("video");
   if (!video) return undefined;
+  const source = video.dataset.src ?? video.getAttribute("src") ?? "";
 
   const reducedQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
   const setState = (state: VideoState) => {
@@ -92,6 +95,10 @@ export function mountBonsaiVideo(root: HTMLElement): (() => void) | undefined {
   };
   const onLoaded = () => {
     setState("ready");
+    if (!primed) {
+      primed = true;
+      prime();
+    }
     loop.wake();
   };
   const onError = () => {
@@ -107,18 +114,23 @@ export function mountBonsaiVideo(root: HTMLElement): (() => void) | undefined {
     scrubber.snap();
   };
 
-  // iOS Safari only lets a muted video seek after a user gesture has started it:
-  // one play() immediately followed by pause(), on the first touch or click.
-  const unlockEvents = ["pointerdown", "touchstart"] as const;
-  const unlock = () => {
-    unlockEvents.forEach((name) => window.removeEventListener(name, unlock));
+  // iOS Safari only paints seeked frames of a muted video after one play():
+  // play() immediately followed by pause(), once the first frame is decoded and,
+  // as a fallback, on the first touch or click.
+  const prime = () => {
     try {
       const started = video.play();
       video.pause();
       started?.catch(() => {});
     } catch {
-      // Nothing to unlock: the poster stays.
+      // Nothing to prime: the poster stays.
     }
+  };
+  let primed = false;
+  const unlockEvents = ["pointerdown", "touchstart"] as const;
+  const unlock = () => {
+    unlockEvents.forEach((name) => window.removeEventListener(name, unlock));
+    prime();
     loop.wake();
   };
 
@@ -133,9 +145,39 @@ export function mountBonsaiVideo(root: HTMLElement): (() => void) | undefined {
   unlockEvents.forEach((name) => window.addEventListener(name, unlock, { once: true, passive: true }));
 
   driver.start();
-  video.load();
+
+  // The element has no src of its own (data-src, preload="none"), so the file is
+  // downloaded once: whole, through fetch(), and played from memory.
+  let objectUrl: string | undefined;
+  let disposed = false;
+  const attach = (url: string) => {
+    video.preload = "auto";
+    video.src = url;
+    video.load();
+  };
+  if (source) {
+    const saveData = Boolean((navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData);
+    if (saveData) attach(source);
+    else {
+      void fetch(source)
+        .then((response) => {
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          return response.blob();
+        })
+        .then((blob) => {
+          objectUrl = URL.createObjectURL(blob);
+          if (disposed) return URL.revokeObjectURL(objectUrl);
+          attach(objectUrl);
+        })
+        .catch(() => {
+          if (!disposed) attach(source);
+        });
+    }
+  }
 
   return () => {
+    disposed = true;
+    if (objectUrl) URL.revokeObjectURL(objectUrl);
     loop.stop();
     driver.stop();
     video.removeEventListener("loadedmetadata", onMetadata);

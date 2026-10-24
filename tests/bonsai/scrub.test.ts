@@ -122,44 +122,87 @@ test("without metadata or with a media error the scrubber never seeks and never 
   }
 });
 
-test("a jump over 0.75 s seeks straight to the target: one seek, no damping", () => {
+test("a 10 s jump is eased: the first step moves part of the way and never overshoots", () => {
   const { video, writes } = fakeVideo();
   const scrubber = createScrubber(video);
-  scrubber.setTarget(15.6);
+  scrubber.setTarget(10);
   assert.equal(scrubber.step(1 / 60), true);
-  assert.deepEqual(writes, [15.6]);
-  for (let i = 0; i < 10; i += 1) scrubber.step(1 / 60);
-  assert.deepEqual(writes, [15.6], "still one seek while it is pending");
-  video.seeking = false;
-  assert.equal(scrubber.step(1 / 60), false, "landed: idle");
-  assert.deepEqual(writes, [15.6]);
+  assert.equal(writes.length, 1);
+  assert.ok(writes[0]! > 0.5 && writes[0]! < 10, `first step is a partial move (${writes[0]})`);
+  for (let i = 0; i < 120; i += 1) {
+    video.seeking = false;
+    scrubber.step(1 / 60);
+  }
+  assert.ok(writes.length > 5, "a fast scroll travels through intermediate frames");
+  for (let i = 1; i < writes.length; i += 1) assert.ok(writes[i]! >= writes[i - 1]!, "monotonic");
+  assert.ok(writes.every((time) => time <= 10), "never overshoots the target");
+  assert.ok(writes.slice(0, -1).every((time) => time < 10), "only the last seek lands on the target");
 });
 
-test("the jump threshold is 0.75 s: just under it eases, just over it jumps", () => {
-  const under = fakeVideo();
-  const a = createScrubber(under.video);
-  a.setTarget(0.74);
-  a.step(1 / 60);
-  assert.ok(under.writes[0]! < 0.74, "eased");
-  const over = fakeVideo();
-  const b = createScrubber(over.video);
-  b.setTarget(0.76);
-  b.step(1 / 60);
-  assert.deepEqual(over.writes, [0.76]);
+test("there is no distance at which the scrubber jumps straight to the target", () => {
+  for (const distance of [0.76, 3, 10, 19]) {
+    const { video, writes } = fakeVideo();
+    const scrubber = createScrubber(video);
+    scrubber.setTarget(distance);
+    scrubber.step(1 / 60);
+    assert.equal(writes.length, 1);
+    assert.ok(writes[0]! < distance, `${distance} s: first seek is short of the target`);
+  }
 });
 
-test("a big jump backwards also lands at once (finished to pagoda)", () => {
+test("a 10 s jump settles on the target within about 0.6 s of 60 Hz steps", () => {
+  const { video } = fakeVideo();
+  const scrubber = createScrubber(video);
+  scrubber.setTarget(10);
+  let frames = 0;
+  let active = true;
+  while (active && frames < 600) {
+    video.seeking = false;
+    active = scrubber.step(1 / 60);
+    frames += 1;
+  }
+  assert.equal(active, false);
+  assert.ok(frames <= 36, `settled in ${frames} frames (${Math.round((frames * 1000) / 60)} ms)`);
+  assert.ok(Math.abs(video.currentTime - 10) < FRAME / 2);
+});
+
+test("a 10 s jump backwards is eased and settles just as fast", () => {
   const { video, writes, setTime } = fakeVideo();
   setTime(19.9);
   const scrubber = createScrubber(video);
   scrubber.setTarget(19.9);
   scrubber.snap();
-  scrubber.setTarget(15.6);
-  scrubber.step(1 / 60);
-  assert.deepEqual(writes, [15.6]);
+  scrubber.setTarget(9.9);
+  assert.equal(scrubber.step(1 / 60), true);
+  assert.equal(writes.length, 1);
+  assert.ok(writes[0]! < 19.9 && writes[0]! > 9.9, `first step is a partial move back (${writes[0]})`);
+  let frames = 1;
+  let active = true;
+  while (active && frames < 600) {
+    video.seeking = false;
+    active = scrubber.step(1 / 60);
+    frames += 1;
+  }
+  assert.equal(active, false);
+  assert.ok(frames <= 36, `settled in ${frames} frames`);
+  assert.ok(writes.every((time) => time >= 9.9), "never overshoots");
+  for (let i = 1; i < writes.length; i += 1) assert.ok(writes[i]! <= writes[i - 1]!, "monotonic");
+  assert.ok(Math.abs(video.currentTime - 9.9) < FRAME / 2);
 });
 
-test("below the jump threshold the video settles within about 300 ms", () => {
+test("the next seek goes out on the very next step after a seek lands, even mid-travel", () => {
+  const { video, writes } = fakeVideo();
+  const scrubber = createScrubber(video);
+  scrubber.setTarget(10);
+  scrubber.step(1 / 60);
+  assert.equal(writes.length, 1);
+  video.seeking = false; // `seeked` fired; the mount wakes the loop
+  assert.equal(scrubber.step(1 / 60), true);
+  assert.equal(writes.length, 2);
+  assert.ok(writes[1]! > writes[0]!);
+});
+
+test("a move under one second also settles within about 300 ms", () => {
   const { video } = fakeVideo();
   const scrubber = createScrubber(video);
   scrubber.setTarget(0.7);
