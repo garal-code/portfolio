@@ -25,15 +25,21 @@ const years = (start: string, end?: string) => `${start}–${end ?? "hoy"}`;
 const careerJobs = careerOrder(jobs);
 const careerSlice = weight("branches") / careerJobs.length;
 
-// Below md the card is compact and pinned to the bottom of the viewport (the
-// copy safe zone, ~45%), so the video stays visible above it. A max-height
-// with internal scroll keeps it from growing over the scene when its content
-// grows later (S7). From md up it is the 40% left column.
+// Below md the card is compact and sits at the bottom of the viewport (the copy
+// safe zone, ~45%), so the video stays visible above it. A max-height with
+// internal scroll keeps it from growing over the scene when its content grows
+// later (S7). From md up it is the 40% left column, vertically centred.
 //
-// Chapter i is active while the viewport TOP is inside its scroll range, so its
-// card has to stay pinned to the viewport BOTTOM one screen further down. On
-// mobile the first section is therefore one screen taller (`firstExtra`): every
-// later section then sits exactly where the viewport bottom is during its chapter.
+// Each card lives in a `data-card-pin` wrapper. With JavaScript the wrapper is
+// fixed to the viewport, so a card never moves while you scroll, and only the
+// card of the section (or career stop) holding the viewport centre is visible
+// (`data-active`, see the style and script below). Without JavaScript the wrapper
+// has no box and the card stays in its section's flow, as before.
+//
+// The sections keep their scroll heights: the background player measures them.
+// On mobile the first one is one screen taller (`firstExtra`), as it has been
+// since the cards were pinned to the bottom edge; changing it would move the
+// video anchors.
 const sectionClass =
   "relative z-10 flex min-h-[var(--chapter-height)] items-end px-4 py-3 md:items-center md:px-16 md:py-10";
 const firstExtra = "max-md:min-h-[calc(var(--chapter-height)+100svh)]";
@@ -41,7 +47,7 @@ const firstExtra = "max-md:min-h-[calc(var(--chapter-height)+100svh)]";
 // radius, a light rim, an inner highlight and layered shadows. The cream fill
 // stays opaque enough for AA text over any frame.
 const panelClass =
-  "bubble-card sticky bottom-3 max-h-[42svh] w-full overflow-y-auto bg-cream/95 p-4 md:static md:max-h-none md:max-w-[40%] md:overflow-visible md:bg-cream/92 md:p-6";
+  "bubble-card max-h-[42svh] w-full overflow-y-auto bg-cream/95 p-4 md:max-h-[88svh] md:max-w-[40%] md:bg-cream/92 md:p-6";
 const eyebrowClass =
   "text-xs font-bold uppercase tracking-[0.2em] text-sage-dark";
 const titleClass =
@@ -57,75 +63,87 @@ const chipClass = "bubble-chip rounded-full bg-sand px-2.5 py-0.5 md:px-3 md:py-
   title={`Bonsai — ${personalInfo.name}`}
   description={personalInfo.summary}
 >
+  <script is:inline>
+    document.documentElement.classList.add("js");
+  </script>
   <BonsaiVideo />
 
   <section
     id="seed"
     data-chapter="seed"
+    data-card-zone="seed"
     class={`${sectionClass} ${firstExtra}`}
     style={sectionStyle("seed")}
     aria-labelledby="seed-title"
   >
-    <div class={panelClass} data-chapter-card>
-      <p class={eyebrowClass}>01 · Semilla</p>
-      <h1
-        id="seed-title"
-        class="mt-2 font-display text-3xl font-extrabold leading-[0.95] tracking-tight text-forest md:mt-3 md:text-5xl"
-      >
-        {personalInfo.name}
-      </h1>
-      <p class={bodyClass}>{personalInfo.bio}</p>
-      <ul class={chipListClass}>
-        {
-          interests.map((interest) => (
-            <li class={chipClass}>
-              {interest.title} · {interest.note}
-            </li>
-          ))
-        }
-      </ul>
+    <div data-card-pin data-active>
+      <div class={panelClass} data-chapter-card>
+        <p class={eyebrowClass}>01 · Semilla</p>
+        <h1
+          id="seed-title"
+          class="mt-2 font-display text-3xl font-extrabold leading-[0.95] tracking-tight text-forest md:mt-3 md:text-5xl"
+        >
+          {personalInfo.name}
+        </h1>
+        <p class={bodyClass}>{personalInfo.bio}</p>
+        <ul class={chipListClass}>
+          {
+            interests.map((interest) => (
+              <li class={chipClass}>
+                {interest.title} · {interest.note}
+              </li>
+            ))
+          }
+        </ul>
+      </div>
     </div>
   </section>
 
   <section
     id="sprout"
     data-chapter="sprout"
+    data-card-zone="sprout"
     class={sectionClass}
     style={sectionStyle("sprout")}
     aria-labelledby="sprout-title"
   >
-    <div class={panelClass} data-chapter-card>
-      <p class={eyebrowClass}>02 · Brote</p>
-      <h2 id="sprout-title" class={titleClass}>Dónde empezó</h2>
-      <ul class="mt-3 space-y-2 text-sm text-body md:mt-4 md:space-y-3 md:text-base">
-        {
-          education.map((item) => (
-            <li>
-              <p class="font-semibold text-ink">{item.degree}</p>
-              <p class="text-sm text-meta">
-                {item.institution} · {years(item.startYear, item.endYear)}
-              </p>
-            </li>
-          ))
-        }
-      </ul>
+    <div data-card-pin>
+      <div class={panelClass} data-chapter-card>
+        <p class={eyebrowClass}>02 · Brote</p>
+        <h2 id="sprout-title" class={titleClass}>Dónde empezó</h2>
+        <ul class="mt-3 space-y-2 text-sm text-body md:mt-4 md:space-y-3 md:text-base">
+          {
+            education.map((item) => (
+              <li>
+                <p class="font-semibold text-ink">{item.degree}</p>
+                <p class="text-sm text-meta">
+                  {item.institution} · {years(item.startYear, item.endYear)}
+                </p>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
     </div>
   </section>
 
   <section
     id="trunk"
     data-chapter="trunk"
+    data-card-zone="trunk"
     class={sectionClass}
     style={sectionStyle("trunk")}
     aria-labelledby="trunk-title"
   >
-    <div class={panelClass} data-chapter-card>
-      <p class={eyebrowClass}>03 · Tronco</p>
-      <h2 id="trunk-title" class={titleClass}>Los fundamentos</h2>
-      <p class={bodyClass}>{personalInfo.summary}</p>
-      <ul class={chipListClass}>
-        {skills.map((skill) => <li class={chipClass}>{skill}</li>)}
-      </ul>
+    <div data-card-pin>
+      <div class={panelClass} data-chapter-card>
+        <p class={eyebrowClass}>03 · Tronco</p>
+        <h2 id="trunk-title" class={titleClass}>Los fundamentos</h2>
+        <p class={bodyClass}>{personalInfo.summary}</p>
+        <ul class={chipListClass}>
+          {skills.map((skill) => <li class={chipClass}>{skill}</li>)}
+        </ul>
+      </div>
     </div>
   </section>
 
@@ -141,24 +159,27 @@ const chipClass = "bubble-chip rounded-full bg-sand px-2.5 py-0.5 md:px-3 md:py-
         careerJobs.map((job, index) => (
           <li
             data-branch-stop={index}
+            data-card-zone={`branches-${index}`}
             class="flex items-end py-3 md:items-center md:py-10"
             style={`min-height: calc(${careerSlice} * 100svh);`}
           >
-            <article class={panelClass} data-chapter-card>
-              {index === 0 && (
-                <>
-                  <p class={eyebrowClass}>04 · Ramas</p>
-                  <h2 id="branches-title" class={titleClass}>La carrera</h2>
-                </>
-              )}
-              <p class="mt-3 font-display text-xl font-bold text-forest md:mt-4 md:text-2xl">
-                {job.company}
-              </p>
-              <p class="text-sm text-meta">
-                {job.role} · {years(job.startDate, job.endDate)}
-              </p>
-              <p class={bodyClass}>{job.summary}</p>
-            </article>
+            <div data-card-pin>
+              <article class={panelClass} data-chapter-card>
+                {index === 0 && (
+                  <>
+                    <p class={eyebrowClass}>04 · Ramas</p>
+                    <h2 id="branches-title" class={titleClass}>La carrera</h2>
+                  </>
+                )}
+                <p class="mt-3 font-display text-xl font-bold text-forest md:mt-4 md:text-2xl">
+                  {job.company}
+                </p>
+                <p class="text-sm text-meta">
+                  {job.role} · {years(job.startDate, job.endDate)}
+                </p>
+                <p class={bodyClass}>{job.summary}</p>
+              </article>
+            </div>
           </li>
         ))
       }
@@ -168,85 +189,186 @@ const chipClass = "bubble-chip rounded-full bg-sand px-2.5 py-0.5 md:px-3 md:py-
   <section
     id="pruning"
     data-chapter="pruning"
+    data-card-zone="pruning"
     class={sectionClass}
     style={sectionStyle("pruning")}
     aria-labelledby="pruning-title"
   >
-    <div class={panelClass} data-chapter-card>
-      <p class={eyebrowClass}>05 · Poda</p>
-      <h2 id="pruning-title" class={titleClass}>Cómo trabaja</h2>
-      <ul class="mt-3 space-y-2 text-sm text-body md:mt-4 md:text-base">
-        {personalInfo.highlights.map((highlight) => <li>{highlight}</li>)}
-      </ul>
+    <div data-card-pin>
+      <div class={panelClass} data-chapter-card>
+        <p class={eyebrowClass}>05 · Poda</p>
+        <h2 id="pruning-title" class={titleClass}>Cómo trabaja</h2>
+        <ul class="mt-3 space-y-2 text-sm text-body md:mt-4 md:text-base">
+          {personalInfo.highlights.map((highlight) => <li>{highlight}</li>)}
+        </ul>
+      </div>
     </div>
   </section>
 
   <section
     id="pagoda"
     data-chapter="pagoda"
+    data-card-zone="pagoda"
     class={sectionClass}
     style={sectionStyle("pagoda")}
     aria-labelledby="pagoda-title"
   >
-    <div class={panelClass} data-chapter-card>
-      <p class={eyebrowClass}>06 · Pagoda</p>
-      <h2 id="pagoda-title" class={titleClass}>{project.name}</h2>
-      <p class={bodyClass}>{project.description}</p>
-      <a
-        href={project.url}
-        class="bubble-button mt-3 inline-block rounded-full bg-forest px-5 py-2 text-sm font-bold text-cream md:mt-4"
-        rel="noopener"
-      >
-        Ver {project.name}
-      </a>
+    <div data-card-pin>
+      <div class={panelClass} data-chapter-card>
+        <p class={eyebrowClass}>06 · Pagoda</p>
+        <h2 id="pagoda-title" class={titleClass}>{project.name}</h2>
+        <p class={bodyClass}>{project.description}</p>
+        <a
+          href={project.url}
+          class="bubble-button mt-3 inline-block rounded-full bg-forest px-5 py-2 text-sm font-bold text-cream md:mt-4"
+          rel="noopener"
+        >
+          Ver {project.name}
+        </a>
+      </div>
     </div>
   </section>
 
   <section
     id="finished"
     data-chapter="finished"
+    data-card-zone="finished"
     class={sectionClass}
     style={sectionStyle("finished")}
     aria-labelledby="finished-title"
   >
-    <div class={panelClass} data-chapter-card>
-      <p class={eyebrowClass}>07 · Bonsai terminado</p>
-      <h2 id="finished-title" class={titleClass}>Hablemos</h2>
-      <ul class="mt-3 space-y-2 text-sm text-forest underline md:mt-4 md:text-base">
-        <li><a href={`mailto:${personalInfo.email}`}>{personalInfo.email}</a></li>
-        <li><a href={personalInfo.links.github} rel="noopener">GitHub</a></li>
-        <li><a href={personalInfo.links.linkedin} rel="noopener">LinkedIn</a></li>
-      </ul>
+    <div data-card-pin>
+      <div class={panelClass} data-chapter-card>
+        <p class={eyebrowClass}>07 · Bonsai terminado</p>
+        <h2 id="finished-title" class={titleClass}>Hablemos</h2>
+        <ul class="mt-3 space-y-2 text-sm text-forest underline md:mt-4 md:text-base">
+          <li><a href={`mailto:${personalInfo.email}`}>{personalInfo.email}</a></li>
+          <li><a href={personalInfo.links.github} rel="noopener">GitHub</a></li>
+          <li><a href={personalInfo.links.linkedin} rel="noopener">LinkedIn</a></li>
+        </ul>
+      </div>
     </div>
   </section>
 </Layout>
 
+<script>
+  import { activeCardId } from "../lib/bonsai/active-card.ts";
+
+  // One card is visible at a time: the one whose section (or career stop) holds
+  // the vertical centre of the viewport. The choice is recomputed from the
+  // section rectangles on every scroll frame, so it is the same going down or up.
+  const zones = Array.from(document.querySelectorAll<HTMLElement>("[data-card-zone]")).map(
+    (element) => ({
+      id: element.dataset.cardZone ?? "",
+      element,
+      pin: element.querySelector<HTMLElement>("[data-card-pin]"),
+    }),
+  );
+  let current: string | undefined;
+  let frame = 0;
+
+  const update = () => {
+    const id = activeCardId(
+      zones.map(({ id, element }) => {
+        const { top, bottom } = element.getBoundingClientRect();
+        return { id, top, bottom };
+      }),
+      window.innerHeight,
+    );
+    if (id === current) return;
+    current = id;
+    for (const zone of zones) {
+      const active = zone.id === id;
+      zone.pin?.toggleAttribute("data-active", active);
+      zone.pin?.toggleAttribute("inert", !active);
+      if (active) zone.pin?.removeAttribute("aria-hidden");
+      else zone.pin?.setAttribute("aria-hidden", "true");
+    }
+  };
+  const schedule = () => {
+    if (frame) return;
+    frame = requestAnimationFrame(() => {
+      frame = 0;
+      update();
+    });
+  };
+
+  try {
+    update();
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule);
+    window.addEventListener("load", schedule);
+    void document.fonts?.ready.then(schedule);
+    if (import.meta.hot) {
+      import.meta.hot.dispose(() => {
+        window.removeEventListener("scroll", schedule);
+        window.removeEventListener("resize", schedule);
+        window.removeEventListener("load", schedule);
+        cancelAnimationFrame(frame);
+      });
+    }
+  } catch {
+    // Show every card in the document flow instead of hiding the unmeasured ones.
+    document.documentElement.classList.remove("js");
+  }
+</script>
+
 <style is:global>
-  /* Layout wraps pages in `overflow-hidden`, which turns <main> into a scroll
-     container and disables the sticky mobile cards. `clip` still crops the
-     overflow but creates no scroll container. */
-  main {
-    overflow: clip;
+  /* Pinned cards. Without JavaScript the wrapper has no box and each card stays
+     in its section's flow. With it (`html.js`, set before the sections render)
+     the wrapper is a full-height layer fixed to the viewport: the card sits at
+     the bottom on mobile and is centred in the left column from md, and it never
+     moves while you scroll. The script marks one wrapper `data-active`; the
+     others fade out and are hidden, so no card is ever cut off or half visible. */
+  [data-card-pin] {
+    display: contents;
   }
 
-  /* Mobile: once a card is released and rides up over the scene, fade it out
-     before it reaches the subject. The timeline belongs to the (non-sticky)
-     box that holds the card: the card is released when that box's bottom edge
-     reaches the viewport bottom, i.e. 100svh before the end of its `cover`
-     range, and is gone about 40svh later. A sticky card cannot be its own subject:
-     browsers measure its whole sticky travel. Browsers without scroll-driven
-     animations simply keep the card scrolling away. */
-  @media (max-width: 767px) {
-    @supports (animation-timeline: view()) {
-      :is(section, li):has(> [data-chapter-card]) {
-        view-timeline: --bonsai-card-box block;
-      }
-      [data-chapter-card] {
-        animation: bonsai-card-exit linear both;
-        animation-timeline: --bonsai-card-box;
-        animation-range: cover calc(100% - 90svh) cover calc(100% - 62svh);
-      }
+  html.js [data-card-pin] {
+    position: fixed;
+    inset-inline: 0;
+    top: 0;
+    height: 100svh;
+    display: flex;
+    align-items: flex-end;
+    padding: 0.75rem 1rem;
+    pointer-events: none;
+  }
+
+  @media (min-width: 768px) {
+    html.js [data-card-pin] {
+      align-items: center;
+      padding: 2.5rem 4rem;
     }
+  }
+
+  /* Crossfade: 350ms, with a slight 8px rise. The card is hidden (no focus, no
+     pointer) once its fade-out ends and visible again at the start of its fade-in.
+     `translate` composes with the hover `transform`, whose transition is repeated
+     here because this rule is more specific than `.bubble-card`. */
+  html.js [data-chapter-card] {
+    pointer-events: auto;
+    opacity: 0;
+    translate: 0 8px;
+    visibility: hidden;
+    transition:
+      opacity 350ms ease,
+      translate 350ms ease,
+      visibility 0s linear 350ms,
+      transform 280ms cubic-bezier(0.2, 0.8, 0.2, 1),
+      box-shadow 280ms ease;
+  }
+
+  html.js [data-card-pin][data-active] [data-chapter-card] {
+    opacity: 1;
+    translate: none;
+    visibility: visible;
+    transition:
+      opacity 350ms ease,
+      translate 350ms ease,
+      visibility 0s,
+      transform 280ms cubic-bezier(0.2, 0.8, 0.2, 1),
+      box-shadow 280ms ease;
   }
 
   /* Bubble surface: a translucent cream body with a specular sheen near the top
@@ -311,12 +433,10 @@ const chipClass = "bubble-chip rounded-full bg-sand px-2.5 py-0.5 md:px-3 md:py-
     .bubble-button:hover {
       transform: none;
     }
-  }
-
-  @keyframes bonsai-card-exit {
-    to {
-      opacity: 0;
-      visibility: hidden;
+    html.js [data-chapter-card],
+    html.js [data-card-pin][data-active] [data-chapter-card] {
+      transition: none;
+      translate: none;
     }
   }
 </style>

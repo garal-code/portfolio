@@ -291,6 +291,8 @@ The static pages are intentionally **flat**, with no box shadows. The one except
 
 Chapter cards over the video are soft rounded bubbles: 28px radius, a 1px white rim at 65%, a cream fill (95% on mobile, 92% from `md`) with a white specular sheen near the top left, an inner top highlight, a soft inner shade at the bottom, layered forest-tinted drop shadows and an 18px backdrop blur. On hover (desktop only) the card lifts 4px with a deeper shadow; with `prefers-reduced-motion` it does not move. Chips (`bubble-chip`) and the primary call to action (`bubble-button`) share the same rim-and-shadow language at a smaller scale. Text contrast is measured against the cream fill over a black frame and stays at least 4.5:1.
 
+The cards are pinned: with JavaScript every card sits in the same place for the whole page, at the bottom of the viewport on mobile (under 42svh tall) and vertically centred in the left column from `md`, and it never scrolls with the page. Only the card of the section (or career stop) that holds the viewport's vertical centre is visible; when the chapter changes the old card fades out and the new one fades in over 350ms with a slight 8px rise. Hidden cards are `inert` and `aria-hidden`. With `prefers-reduced-motion` the switch is instant, and without JavaScript every card stays visible in the normal flow of its section.
+
 Depth comes from three devices:
 1. **Color blocking:** forest band vs cream canvas.
 2. **Card on canvas:** white cards on cream, and a sand track behind the tabs.
