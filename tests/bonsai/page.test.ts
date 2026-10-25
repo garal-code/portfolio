@@ -126,6 +126,15 @@ test("La carrera is a timeline: one dot per job, joined by a line on the left", 
   assert.match(line, /height:\s*calc\(100% \+ var\(--timeline-gap\)\)/, "it reaches the next dot");
 });
 
+test("only the intro column spaces its cards so the next one peeks in with its title", () => {
+  assert.match(layerOf(block("intro")), /<div data-card-column data-flow-peek class=\{columnClass\}>/);
+  assert.doesNotMatch(layerOf(block("career")) + layerOf(block("practice")), /data-flow-peek/);
+  const mount = readFileSync(new URL("../../src/lib/bonsai/card-flow-mount.ts", import.meta.url), "utf8");
+  assert.match(mount, /data-flow-peek/);
+  assert.match(mount, /peekGap\(/);
+  assert.match(mount, /rowGap/, "one gap for the whole column, so the three are spaced the same");
+});
+
 test("the practice card speaks in first person: Cómo trabajo", () => {
   assert.match(page, /<h2 id="pruning-title" class=\{titleClass\}>Cómo trabajo<\/h2>/);
   assert.doesNotMatch(page, /Cómo trabaja/);
@@ -172,6 +181,13 @@ test("a contact bar fixed at the top right shows LinkedIn, email, GitHub and Por
   assert.match(bar, /right:\s*[^;]+/);
   assert.doesNotMatch(bar, /left:/, "top right corner, not left");
   assert.match(bar, /z-index:\s*(\d+)/);
+});
+
+test("the Portfolio App button in the contact bar is the palette gold with forest text", () => {
+  const button = classOf("appButtonClass");
+  assert.match(button, /(^| )bg-gold( |$)/);
+  assert.match(button, /(^| )text-forest( |$)/, "forest on gold keeps strong contrast");
+  assert.doesNotMatch(button, /bg-forest|text-cream/);
 });
 
 test("a centred desktop card never reaches under the contact bar", () => {

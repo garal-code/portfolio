@@ -75,3 +75,14 @@ export function flowTransform(
   const y = Number.isFinite(scroll) ? Math.min(last, Math.max(first, scroll)) : first;
   return flowOffset(y, stops, offsets) - frameTopAt(y);
 }
+
+/**
+ * Gap (px) for a column whose first card rests centred, chosen so that only the
+ * top `peek` px of the second card show below it (its title) and the third
+ * stays off screen. One gap for the whole column keeps the cards evenly spaced.
+ * Never below `minGap`.
+ */
+export function peekGap(viewport: number, firstHeight: number, peek: number, minGap: number): number {
+  const gap = (viewport - firstHeight) / 2 - peek;
+  return Number.isFinite(gap) ? Math.max(minGap, gap) : minGap;
+}

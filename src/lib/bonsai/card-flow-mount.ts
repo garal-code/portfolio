@@ -2,10 +2,12 @@
 // stops from the DOM, then moves every column on scroll with the pure mapping
 // in card-flow.ts. Measured again on resize, fonts, load and layout changes.
 
-import { flowTransform, holdOffsets, stickyTop, type HoldMode } from "./card-flow.ts";
+import { flowTransform, holdOffsets, peekGap, stickyTop, type HoldMode } from "./card-flow.ts";
 
 /** Below this width cards rest at the bottom of the viewport; above, centred. */
 const MOBILE_BREAKPOINT = 768;
+/** Space shown below the second card's title in a `data-flow-peek` column, in px. */
+const PEEK_MARGIN = 16;
 
 interface FlowBlock {
   block: HTMLElement;
@@ -48,11 +50,31 @@ export function mountCardFlow(root: ParentNode = document): () => void {
     }
   }
 
+  /**
+   * A `data-flow-peek` column (S16) spaces its cards so that, while the first
+   * one rests centred, only the second card's title shows below it. Mobile
+   * cards rest at the bottom, where nothing peeks, so they keep the CSS gap.
+   */
+  function spaceForPeek(block: FlowBlock, mode: HoldMode) {
+    if (!block.column.hasAttribute("data-flow-peek")) return;
+    const [first, second] = block.cards;
+    const title = second?.querySelector("h2, h3");
+    if (mode !== "centre" || !first || !second || !title) {
+      block.column.style.rowGap = "";
+      return;
+    }
+    const peek = title.getBoundingClientRect().bottom - second.getBoundingClientRect().top + PEEK_MARGIN;
+    const minGap = Number.parseFloat(getComputedStyle(block.column).columnGap) || 0;
+    const frameHeight = block.frame.clientHeight || window.innerHeight;
+    block.column.style.rowGap = `${peekGap(frameHeight, first.getBoundingClientRect().height, peek, minGap)}px`;
+  }
+
   function measure() {
     const view = window.innerHeight;
     const y = scrollTop();
     const mode: HoldMode = window.innerWidth < MOBILE_BREAKPOINT ? "bottom" : "centre";
     for (const block of blocks) {
+      spaceForPeek(block, mode);
       const bounds = block.block.getBoundingClientRect();
       block.top = bounds.top + y;
       block.bottom = bounds.bottom + y;

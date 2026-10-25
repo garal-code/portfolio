@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { flowOffset, flowTransform, holdOffsets, stickyTop, type FlowCard } from "../../src/lib/bonsai/card-flow.ts";
+import { flowOffset, flowTransform, holdOffsets, peekGap, stickyTop, type FlowCard } from "../../src/lib/bonsai/card-flow.ts";
 
 const VIEW = 900;
 // Three cards in a column with a 24 px gap, as measured from the column top.
@@ -112,4 +112,28 @@ test("between stops the cards glide at most as fast as the scroll", () => {
     const step = Math.abs(placed(scroll + 10, 1) - placed(scroll, 1));
     assert.ok(step <= 10.0001, `at ${scroll}: ${step}px for 10px of scroll`);
   }
+});
+
+// --- intro block: the next card peeks in with only its title (S16) ---------------
+
+test("peekGap leaves exactly the title of the second card on screen while the first rests centred", () => {
+  const first = 300;
+  const second = 260;
+  const third = 340;
+  const titlePeek = 80;
+  const gap = peekGap(VIEW, first, titlePeek, 24);
+  assert.equal(gap, (VIEW - first) / 2 - titlePeek);
+  const column: FlowCard[] = [
+    { top: 0, height: first },
+    { top: first + gap, height: second },
+    { top: first + gap + second + gap, height: third },
+  ];
+  const offset = holdOffsets(column, VIEW, "centre")[0]!;
+  assert.equal(VIEW - (column[1]!.top + offset), titlePeek, "only the title strip of the second card shows");
+  assert.ok(column[2]!.top + offset >= VIEW, "the third card is still below the screen");
+});
+
+test("peekGap never goes below the normal gap, even on a short screen", () => {
+  assert.equal(peekGap(500, 420, 80, 24), 24);
+  assert.equal(peekGap(Number.NaN, 300, 80, 24), 24);
 });
