@@ -46,8 +46,8 @@ const rule = (selector: string) => {
 
 test("every card is a direct child of its own section or career stop", () => {
   const cards = page.match(/<(?:div|article)\b[^>]*data-chapter-card/g) ?? [];
-  assert.equal(cards.length, 7, "6 chapter cards plus the one rendered per career stop");
-  for (const id of ["seed", "sprout", "trunk", "pruning", "pagoda", "finished"]) {
+  assert.equal(cards.length, 6, "5 chapter cards plus the one rendered per career stop; finished has none");
+  for (const id of ["seed", "sprout", "trunk", "pruning", "pagoda"]) {
     assert.match(page, new RegExp(`<section\\s+id="${id}"[^>]*>\\s*<div class=\\{panelClass\\} data-chapter-card>`), `${id} card sits in its section`);
   }
   assert.match(page, /data-branch-stop=\{index\}[^>]*>\s*<article class=\{panelClass\} data-chapter-card>/);
@@ -73,7 +73,9 @@ test("sticky works on this page: main clips instead of creating a scroll contain
 test("no card fades or hides: no pinned layer, no active-card script", () => {
   assert.doesNotMatch(page, /data-card-pin|data-card-zone|data-active|activeCardId|html\.js|classList\.add\("js"\)/);
   assert.doesNotMatch(page, /<script>/, "the page needs no client script for the cards");
-  assert.doesNotMatch(styles, /visibility:\s*hidden|opacity:\s*0\b|position:\s*fixed/);
+  assert.doesNotMatch(styles, /visibility:\s*hidden|opacity:\s*0\b/);
+  const fixed = [...styles.replace(/\/\*[\s\S]*?\*\//g, "").matchAll(/([^{}]+)\{[^}]*position:\s*fixed/g)].map(([, selector]) => selector.trim());
+  assert.deepEqual(fixed, ["[data-contact-bar]"], "only the contact bar is fixed, never a card");
   assert.doesNotMatch(page, /\sinert\b|aria-hidden="true">\s*<div class=\{panelClass/);
 });
 
@@ -83,7 +85,7 @@ test("the scroll-driven exit animation of the old mobile cards is gone", () => {
 
 test("sections keep their ids, labels and scroll heights for the background player", () => {
   assert.equal((page.match(/data-chapter="/g) ?? []).length, 7);
-  assert.equal((page.match(/aria-labelledby="/g) ?? []).length, 7);
+  assert.equal((page.match(/aria-labelledby="/g) ?? []).length, 6, "finished has no card and no heading");
   assert.match(page, /style=\{sectionStyle\("seed"\)\}/);
   assert.match(page, /style=\{`min-height: calc\(\$\{careerSlice\} \* 100svh\);`\}/);
   assert.match(classOf("sectionClass"), /min-h-\[var\(--chapter-height\)\]/);
@@ -100,19 +102,49 @@ test("no card carries the numbered chapter eyebrow (01 · Semilla …)", () => {
   }
 });
 
-test("Hablemos shows LinkedIn, email and GitHub as labelled icons, in that order", () => {
-  const card = page.match(/id="finished-title"[\s\S]*?<\/ul>/)?.[0] ?? "";
-  const links = [...card.matchAll(/<a\b([^>]*)>([\s\S]*?)<\/a>/g)];
+test("Hablemos is gone, but the finished stretch keeps its scroll so the video ending plays", () => {
+  assert.doesNotMatch(page, /Hablemos|finished-title/);
+  const finished = page.match(/<section\s+id="finished"[\s\S]*?<\/section>/)?.[0] ?? "";
+  assert.match(finished, /data-chapter="finished"/);
+  assert.match(finished, /style=\{sectionStyle\("finished"\)\}/);
+  assert.match(finished, /aria-hidden="true"/, "an empty stretch of scroll, not a landmark");
+  assert.doesNotMatch(finished, /data-chapter-card|<a\b/);
+});
+
+const contactBar = page.match(/<nav\b[^>]*data-contact-bar[\s\S]*?<\/nav>/)?.[0] ?? "";
+
+test("a contact bar fixed at the top left shows LinkedIn, email, GitHub and Portfolio App, in that order", () => {
+  assert.match(contactBar, /^<nav\b[^>]*aria-label="Contacto"/);
+  const links = [...contactBar.matchAll(/<a\b([^>]*)>([\s\S]*?)<\/a>/g)];
   assert.deepEqual(
-    links.map(([, attributes]) => attributes.match(/href=\{(personalInfo\.links\.\w+|`mailto:)/)?.[1]),
-    ["personalInfo.links.linkedin", "`mailto:", "personalInfo.links.github"],
+    links.map(([, attributes]) => attributes.match(/href=\{(personalInfo\.links\.\w+|`mailto:|project\.url)/)?.[1]),
+    ["personalInfo.links.linkedin", "`mailto:", "personalInfo.links.github", "project.url"],
   );
   assert.deepEqual(
-    links.map(([, attributes]) => attributes.match(/aria-label="([^"]*)"/)?.[1]),
+    links.slice(0, 3).map(([, attributes]) => attributes.match(/aria-label="([^"]*)"/)?.[1]),
     ["LinkedIn", "Email", "GitHub"],
   );
-  for (const [, , inner] of links) {
+  for (const [, , inner] of links.slice(0, 3)) {
     assert.match(inner, /<svg\b[^>]*aria-hidden="true"/, "the icon is decorative; the link label names it");
     assert.equal(inner.replace(/<[^>]*>/g, "").trim(), "", "no visible text, only the icon");
+  }
+  assert.equal(links[3]?.[2].replace(/<[^>]*>/g, "").trim(), "{project.name}", "the app button shows its name");
+  const bar = rule("[data-contact-bar]");
+  assert.match(bar, /position:\s*fixed/, "visible during the whole scroll");
+  assert.match(bar, /top:\s*[^;]+/);
+  assert.match(bar, /left:\s*[^;]+/);
+  assert.match(bar, /z-index:\s*(\d+)/);
+});
+
+test("a centred desktop card never reaches under the contact bar", () => {
+  const share = Number(classOf("panelClass").match(/md:max-h-\[(\d+)svh\]/)?.[1]);
+  assert.ok(share <= 80, `centred cards leave at least 10svh above them (got ${share}svh)`);
+});
+
+test("the personal project is now called Portfolio App everywhere", () => {
+  const resume = readFileSync(new URL("../../src/data/resume.ts", import.meta.url), "utf8");
+  assert.match(resume, /name: "Portfolio App"/);
+  for (const path of ["src/data/resume.ts", "src/components/Hero.astro", "src/pages/bonsai.astro"]) {
+    assert.doesNotMatch(readFileSync(new URL(`../../${path}`, import.meta.url), "utf8"), /Tu Cartera/, path);
   }
 });

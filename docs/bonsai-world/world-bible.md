@@ -90,7 +90,7 @@ Copy comes from `src/data/resume.ts`; no new facts are invented.
 | 3 | `trunk` | The fundamentals | Trunk thickens; copper wire spirals around it in 5 turns (S, O, L, I, D) | Vertical growth; wire draws on | `skills`, `personalInfo.summary` | 1.4 |
 | 4 | `branches` | The career | Four branches grow bottom-up in chronological order, each with a gold annotation callout | Camera rises along the trunk, one stop per branch | `jobs` (GMV 2018–21 · Futurespace 2021–22 · Scalian 2022–25 · Santander 2025–today) | 2.4 |
 | 5 | `pruning` | How he works | Excess twigs are cut and fall; foliage pads condense into clean shapes | First subtraction; golden-hour light | `personalInfo.highlights` (Clean Code, doing things right) | 1.2 |
-| 6 | `pagoda` | What he builds on his own | The pagoda beside the tree lights up; lanterns along the stairs turn on | Dusk; camera moves to the pagoda | `project` (Tu Cartera) | 1.2 |
+| 6 | `pagoda` | What he builds on his own | The pagoda beside the tree lights up; lanterns along the stairs turn on | Dusk; camera moves to the pagoda | `project` (Portfolio App) | 1.2 |
 | 7 | `finished` | Let's talk | Camera pulls back: the finished bonsai on a windowsill at dusk | Full reveal of the world | Contact links (contact band) | 1.0 |
 
 Each annotation in chapter 4 mirrors a DOM list item, so the career is readable without WebGL.

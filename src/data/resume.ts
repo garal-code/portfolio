@@ -92,7 +92,7 @@ export const interests: Interest[] = [
 // ─── Personal project ──────────────────────────────────────────────────────
 
 export const project: Project = {
-  name: "Tu Cartera",
+  name: "Portfolio App",
   url: "https://tu-cartera.garal.app",
   description:
     "Una app que construyo en mi tiempo libre para seguir y analizar mi cartera de inversión.",
