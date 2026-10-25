@@ -125,3 +125,30 @@ test("sections keep their ids, labels and scroll heights for the background play
   assert.match(classOf("sectionClass"), /min-h-\[var\(--chapter-height\)\]/);
   assert.match(page, /const firstExtra = "max-md:min-h-\[calc\(var\(--chapter-height\)\+100svh\)\]"/);
 });
+
+// --- card headings and contact icons -------------------------------------------
+
+test("no card carries the numbered chapter eyebrow (01 · Semilla …)", () => {
+  assert.doesNotMatch(page, /eyebrowClass/);
+  assert.doesNotMatch(page, /\b0[1-7] · /);
+  for (const name of ["Semilla", "Brote", "Tronco", "Ramas", "Poda", "Bonsai terminado"]) {
+    assert.doesNotMatch(page, new RegExp(`· ${name}<`), `${name} eyebrow removed`);
+  }
+});
+
+test("Hablemos shows LinkedIn, email and GitHub as labelled icons, in that order", () => {
+  const card = page.match(/id="finished-title"[\s\S]*?<\/ul>/)?.[0] ?? "";
+  const links = [...card.matchAll(/<a\b([^>]*)>([\s\S]*?)<\/a>/g)];
+  assert.deepEqual(
+    links.map(([, attributes]) => attributes.match(/href=\{(personalInfo\.links\.\w+|`mailto:)/)?.[1]),
+    ["personalInfo.links.linkedin", "`mailto:", "personalInfo.links.github"],
+  );
+  assert.deepEqual(
+    links.map(([, attributes]) => attributes.match(/aria-label="([^"]*)"/)?.[1]),
+    ["LinkedIn", "Email", "GitHub"],
+  );
+  for (const [, , inner] of links) {
+    assert.match(inner, /<svg\b[^>]*aria-hidden="true"/, "the icon is decorative; the link label names it");
+    assert.equal(inner.replace(/<[^>]*>/g, "").trim(), "", "no visible text, only the icon");
+  }
+});
