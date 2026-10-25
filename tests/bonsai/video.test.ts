@@ -168,7 +168,7 @@ function sources(dir: string): string[] {
 }
 
 test("the page mounts BonsaiVideo and no longer mounts BonsaiWorld", () => {
-  const page = read("src/pages/bonsai.astro");
+  const page = read("src/pages/index.astro");
   assert.match(page, /import BonsaiVideo from "\.\.\/components\/bonsai\/BonsaiVideo\.astro"/);
   assert.match(page, /<BonsaiVideo \/>/);
   assert.doesNotMatch(page, /BonsaiWorld/);
@@ -207,7 +207,7 @@ test("the island renders a muted inline poster video behind the sections, croppe
 });
 
 test("every branch card carries its stop index so the client can measure where it is centred", () => {
-  const page = read("src/pages/bonsai.astro");
+  const page = read("src/pages/index.astro");
   assert.match(page, /data-branch-stop=\{index\}/);
   const mount = read("src/lib/bonsai/video-mount.ts");
   assert.match(mount, /data-branch-stop/);
@@ -508,7 +508,7 @@ const luminance = (hex: string) => {
 const contrast = (a: number, b: number) => (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
 
 test("cards are solid palette cream: no translucency, no white sheen, text at 4.5:1", () => {
-  const page = read("src/pages/bonsai.astro");
+  const page = read("src/pages/index.astro");
   const panel = page.match(/const panelClass =\s*"([^"]+)"/)?.[1] ?? "";
   assert.match(panel, /(^| )bg-cream( |$)/, "the card fill is the palette cream");
   assert.doesNotMatch(panel, /bg-cream\/|bg-white/, "opaque: the video never lightens or darkens it");

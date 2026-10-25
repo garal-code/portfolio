@@ -1,8 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 
-const page = readFileSync(new URL("../../src/pages/bonsai.astro", import.meta.url), "utf8");
+const page = readFileSync(new URL("../../src/pages/index.astro", import.meta.url), "utf8");
 const classOf = (name: string) => page.match(new RegExp(`const ${name} =\\s*"([^"]+)"`))?.[1] ?? "";
 
 test("mobile chapter cards are compact and scroll inside when content grows", () => {
@@ -147,7 +147,20 @@ test("the personal project is now called Portfolio App everywhere", () => {
   assert.match(resume, /name: "Portfolio App"/);
   assert.match(resume, /url: "https:\/\/portfolio\.garal\.app"/, "the app button and links open the new domain");
   assert.doesNotMatch(resume, /tu-cartera\.garal\.app/);
-  for (const path of ["src/data/resume.ts", "src/components/Hero.astro", "src/pages/bonsai.astro"]) {
+  for (const path of ["src/data/resume.ts", "src/pages/index.astro"]) {
     assert.doesNotMatch(readFileSync(new URL(`../../${path}`, import.meta.url), "utf8"), /Tu Cartera/, path);
   }
+});
+
+// --- the bonsai world is the home page --------------------------------------
+
+test("the bonsai world lives at the root: index.astro, no /bonsai route, no old home sections", () => {
+  const exists = (path: string) => existsSync(new URL(`../../${path}`, import.meta.url));
+  assert.match(page, /<BonsaiVideo \/>/, "the home page mounts the video world");
+  assert.equal(exists("src/pages/bonsai.astro"), false, "/bonsai is gone");
+  for (const name of ["Hero", "Journey", "Footer"]) {
+    assert.equal(exists(`src/components/${name}.astro`), false, `${name} belonged to the old home`);
+    assert.doesNotMatch(page, new RegExp(`import ${name}\\b`));
+  }
+  assert.doesNotMatch(page, /title=\{`Bonsai/, "the home keeps the default title (name and role)");
 });

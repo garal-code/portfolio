@@ -97,7 +97,7 @@ Each annotation in chapter 4 mirrors a DOM list item, so the career is readable 
 
 ## Video background (S9)
 
-The page background is the user's Blender render, scrubbed by scroll, instead of the real-time world (L17, L21). Sections 5 to 8 describe the Three.js world and are **superseded by the video for `/bonsai`**; they stay for reference. Chapters, copy, cards, the 40% left copy column and the mobile bottom cards are unchanged.
+The page background is the user's Blender render, scrubbed by scroll, instead of the real-time world (L17, L21). Sections 5 to 8 describe the Three.js world and are **superseded by the video on the home page (`/`; it was `/bonsai` until L50)**; they stay for reference. Chapters, copy, cards, the 40% left copy column and the mobile bottom cards are unchanged.
 
 **Asset.** `public/bonsai/video/bonsai-1080p.mp4`: the final Blender render the user approved (2026-10-22, Cycles, 64 samples; L34), 1920x1080, 30 fps, 20.0 s, 600 frames, no audio, 13.4 MB. It is re-encoded from `bonsai_blender/bonsai_scroll_world_1080p.mp4` (CRF 17 master) for scrubbing, like midudev/mcp-higgsfield-landing: H.264 CRF 28, a keyframe every 6 frames, and colour tagged BT.709 with the sRGB curve so the browser paints it like the poster:
 

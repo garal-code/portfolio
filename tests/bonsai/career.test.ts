@@ -56,7 +56,7 @@ test("the generator's career branches follow the helper, even for a shuffled job
 });
 
 test("the page uses the same helper and no longer reverses the resume list", () => {
-  const page = readFileSync(new URL("../../src/pages/bonsai.astro", import.meta.url), "utf8");
+  const page = readFileSync(new URL("../../src/pages/index.astro", import.meta.url), "utf8");
   assert.match(page, /careerOrder\(jobs\)/);
   assert.doesNotMatch(page, /\.reverse\(\)/);
 });

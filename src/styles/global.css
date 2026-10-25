@@ -46,17 +46,6 @@ a {
     box-shadow 180ms ease;
 }
 
-[data-animate] {
-  opacity: 0;
-  transform: translateY(24px);
-  transition: opacity 0.55s ease, transform 0.55s ease;
-}
-
-.animate-in {
-  opacity: 1;
-  transform: translateY(0);
-}
-
 .text-balance {
   text-wrap: balance;
 }

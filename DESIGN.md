@@ -190,6 +190,8 @@ components:
 
 Garal is a personal brand, not a SaaS product. The page should read like the cover and contents of a well-made technical magazine: one confident name, one clear statement of who the person is, then the evidence (project, experience, education, stack) and a direct way to get in touch.
 
+> **Home page (2026-10-25):** the root page (`/`) is the bonsai video world described in "Video world" below and in `docs/bonsai-world/world-bible.md`. The forest band, hero, journey, project panel and contact band sections describe the retired static home (`Hero`, `Journey` and `Footer` were removed); they remain the reference for any future static page.
+
 The atmosphere is **warm, grounded and editorial**. A deep **forest band** (`{colors.forest}`) opens the page and carries the name, tagline and interests in cream. The rest of the page sits on a **paper-cream canvas** (`{colors.cream}`) with white content cards. A single **gold accent** (`{colors.gold}`) marks the moments that matter: the tagline, the navigation and the closing contact band.
 
 **Key Characteristics:**
@@ -285,7 +287,7 @@ Big type, tight blocks. Inside a block, elements sit close (10–20px gaps) so e
 
 ## Elevation & Depth
 
-The static pages are intentionally **flat**, with no box shadows. The one exception is the video world (`/bonsai`, see below), where cards float over moving footage and use the bubble surface.
+The static pages are intentionally **flat**, with no box shadows. The one exception is the video world (the home page, `/`, see below), where cards float over moving footage and use the bubble surface.
 
 ### Bubble surface (video world only)
 
