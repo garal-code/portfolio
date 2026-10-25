@@ -145,6 +145,8 @@ test("a centred desktop card never reaches under the contact bar", () => {
 test("the personal project is now called Portfolio App everywhere", () => {
   const resume = readFileSync(new URL("../../src/data/resume.ts", import.meta.url), "utf8");
   assert.match(resume, /name: "Portfolio App"/);
+  assert.match(resume, /url: "https:\/\/portfolio\.garal\.app"/, "the app button and links open the new domain");
+  assert.doesNotMatch(resume, /tu-cartera\.garal\.app/);
   for (const path of ["src/data/resume.ts", "src/components/Hero.astro", "src/pages/bonsai.astro"]) {
     assert.doesNotMatch(readFileSync(new URL(`../../${path}`, import.meta.url), "utf8"), /Tu Cartera/, path);
   }
