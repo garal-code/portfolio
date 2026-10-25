@@ -507,22 +507,21 @@ const luminance = (hex: string) => {
 };
 const contrast = (a: number, b: number) => (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
 
-test("translucent cards keep body and heading text at 4.5:1 even over a black frame", () => {
+test("cards are solid palette cream: no translucency, no white sheen, text at 4.5:1", () => {
   const page = read("src/pages/bonsai.astro");
   const panel = page.match(/const panelClass =\s*"([^"]+)"/)?.[1] ?? "";
-  const alphas = [...panel.matchAll(/(?:^| |md:)bg-cream\/(\d+)/g)].map((match) => Number(match[1]) / 100);
-  assert.ok(alphas.length >= 1, "the card keeps a cream background");
-  const cream = 0xf4f1ea;
-  for (const alpha of alphas) {
-    const over = (shift: number) => Math.round(((cream >> shift) & 255) * alpha);
-    const background = (over(16) << 16) | (over(8) << 8) | over(0);
-    const lum = luminance(`#${background.toString(16).padStart(6, "0")}`);
-    for (const [name, color] of [
-      ["body", "#3d554c"],
-      ["forest", "#123a2f"],
-      ["ink", "#10231d"],
-    ] as const) {
-      assert.ok(contrast(lum, luminance(color)) >= 4.5, `${name} on cream/${alpha * 100} over black`);
-    }
+  assert.match(panel, /(^| )bg-cream( |$)/, "the card fill is the palette cream");
+  assert.doesNotMatch(panel, /bg-cream\/|bg-white/, "opaque: the video never lightens or darkens it");
+  const card = page.match(/\.bubble-card\s*\{([^}]+)\}/)?.[1] ?? "";
+  const fill = card.match(/background-image:([^;]+);/)?.[1] ?? "";
+  assert.doesNotMatch(fill, /255 255 255/, "no white sheen washes the cream out");
+  assert.doesNotMatch(card, /backdrop-filter/, "nothing shows through an opaque card, so no blur");
+  const cream = luminance("#f4f1ea");
+  for (const [name, color] of [
+    ["body", "#3d554c"],
+    ["forest", "#123a2f"],
+    ["ink", "#10231d"],
+  ] as const) {
+    assert.ok(contrast(cream, luminance(color)) >= 4.5, `${name} on cream`);
   }
 });
