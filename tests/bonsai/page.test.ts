@@ -7,7 +7,7 @@ const classOf = (name: string) => page.match(new RegExp(`const ${name} =\\s*"([^
 
 test("mobile chapter cards are compact and scroll inside when content grows", () => {
   const panel = classOf("panelClass");
-  assert.doesNotMatch(panel, /(^| )(sticky|static|fixed|absolute)( |$)/, "the wrapper pins the card, the card itself stays in the wrapper");
+  assert.doesNotMatch(panel, /(^| )(sticky|static|fixed|absolute)( |$)/, "stickiness lives in the [data-chapter-card] rule, not in utility classes");
   assert.match(panel, /(^| )max-h-\[(\d+)svh\]/, "bounded height on mobile");
   const share = Number(panel.match(/max-h-\[(\d+)svh\]/)?.[1]);
   assert.ok(share <= 45, `card takes at most the bottom 45% (got ${share}svh)`);
@@ -22,7 +22,7 @@ test("desktop cards keep the 40% left column", () => {
   assert.match(panel, /(^| )overflow-y-auto( |$)/, "and scrolls inside instead");
   assert.doesNotMatch(panel, /md:overflow-visible/);
   assert.match(panel, /md:p-6/);
-  assert.match(classOf("sectionClass"), /md:items-center md:px-16/);
+  assert.match(classOf("sectionClass"), /md:items-start md:px-16/);
 });
 
 test("chapter cards, chips and the call to action use the bubble surface with depth", () => {
@@ -36,81 +36,45 @@ test("chapter cards, chips and the call to action use the bubble surface with de
   assert.match(page, /prefers-reduced-motion:\s*reduce[\s\S]*bubble-card/, "the hover lift respects reduced motion");
 });
 
-// --- pinned cards that crossfade (S11a) ---------------------------------------
+// --- cards that scroll like a page (S13) ---------------------------------------
 
 const styles = page.match(/<style is:global>([\s\S]*)<\/style>/)?.[1] ?? "";
 const rule = (selector: string) => {
   const escaped = selector.replace(/[.*+?^${}()|[\]\\>]/g, "\\$&");
   return styles.match(new RegExp(`${escaped}\\s*\\{([^}]*)\\}`))?.[1] ?? "";
 };
-const script = page.match(/<script>([\s\S]*?)<\/script>/)?.[1] ?? "";
 
-test("every card sits in its own pinned wrapper, inside its own section or career stop", () => {
+test("every card is a direct child of its own section or career stop", () => {
   const cards = page.match(/<(?:div|article)\b[^>]*data-chapter-card/g) ?? [];
-  const pinned = page.match(/<div[^>]*data-card-pin[^>]*>\s*<(?:div|article)[^>]*data-chapter-card/g) ?? [];
   assert.equal(cards.length, 7, "6 chapter cards plus the one rendered per career stop");
-  assert.equal(pinned.length, cards.length, "one wrapper per card");
-  const zones = page.match(/<(?:section|li)\b[^>]*data-card-zone=/g) ?? [];
-  assert.equal(zones.length, 7, "6 sections plus the career stop");
   for (const id of ["seed", "sprout", "trunk", "pruning", "pagoda", "finished"]) {
-    assert.match(page, new RegExp(`id="${id}"\\s+data-chapter="${id}"[\\s\\S]*?data-card-zone="${id}"`));
+    assert.match(page, new RegExp(`<section\\s+id="${id}"[^>]*>\\s*<div class=\\{panelClass\\} data-chapter-card>`), `${id} card sits in its section`);
   }
-  assert.match(page, /data-branch-stop=\{index\}[\s\S]*?data-card-zone=\{`branches-\$\{index\}`\}/);
+  assert.match(page, /data-branch-stop=\{index\}[^>]*>\s*<article class=\{panelClass\} data-chapter-card>/);
 });
 
-test("the wrapper holds one viewport position per breakpoint: bottom on mobile, centred on md and up", () => {
-  const pin = rule("html.js [data-card-pin]");
-  assert.match(pin, /position:\s*fixed/, "does not move with the page");
-  assert.match(pin, /top:\s*0/);
-  assert.match(pin, /height:\s*100svh/);
-  assert.match(pin, /align-items:\s*flex-end/, "mobile: bottom of the viewport");
-  assert.match(pin, /pointer-events:\s*none/, "the empty wrapper never blocks the page");
-  assert.match(styles, /@media \(min-width: 768px\)\s*\{\s*html\.js \[data-card-pin\]\s*\{[^}]*align-items:\s*center/, "md: vertically centred");
-  assert.match(rule("html.js [data-chapter-card]"), /pointer-events:\s*auto/);
+test("cards are sticky: at the bottom on mobile, centred from md, and move with the page between chapters", () => {
+  const card = rule("[data-chapter-card]");
+  assert.match(card, /position:\s*sticky/);
+  assert.match(card, /bottom:\s*0\.75rem/, "mobile: held at the bottom edge");
+  const desktop = styles.match(/@media \(min-width: 768px\)\s*\{\s*\[data-chapter-card\]\s*\{([^}]*)\}/)?.[1] ?? "";
+  assert.match(desktop, /top:\s*50svh/, "md: held at the vertical centre");
+  assert.match(desktop, /translate:\s*0 -50%/);
+  assert.match(desktop, /bottom:\s*auto/);
+  assert.match(classOf("sectionClass"), /(^| )items-end( |$)/, "mobile: the card rides the section's bottom edge in");
+  assert.match(classOf("sectionClass"), /md:items-start/, "md: the card enters with the section top");
+  assert.match(page, /data-branch-stop=\{index\}[\s\S]*?class="flex items-end py-3 md:items-start md:py-10"/);
 });
 
-test("inactive cards fade out and rise 8px; the active one fades in over 350ms", () => {
-  const card = rule("html.js [data-chapter-card]");
-  assert.match(card, /opacity:\s*0/);
-  assert.match(card, /translate:\s*0 8px/);
-  assert.match(card, /visibility:\s*hidden/, "hidden cards leave focus and pointer");
-  assert.match(card, /transition:[^;]*opacity 350ms/);
-  assert.match(card, /transition:[^;]*translate 350ms/);
-  assert.match(card, /transition:[^;]*visibility 0s linear 350ms/, "hidden only after the fade ends");
-  const active = rule("html.js [data-card-pin][data-active] [data-chapter-card]");
-  assert.match(active, /opacity:\s*1/);
-  assert.match(active, /translate:\s*none/);
-  assert.match(active, /visibility:\s*visible/);
-  assert.match(active, /transition:[^;]*visibility 0s/, "visible at once when fading in");
-  assert.match(card, /transition:[^;]*transform 280ms/, "the hover lift keeps its transition");
+test("sticky works on this page: main clips instead of creating a scroll container", () => {
+  assert.match(rule("main"), /overflow:\s*clip/);
 });
 
-test("reduced motion switches cards instantly", () => {
-  const reduced = styles.match(/@media \(prefers-reduced-motion: reduce\)\s*\{([\s\S]*?\n  \})/)?.[1] ?? "";
-  assert.match(reduced, /html\.js \[data-chapter-card\]/);
-  assert.match(reduced, /transition:\s*none/);
-  assert.match(reduced, /translate:\s*none/);
-});
-
-test("inactive cards are inert and aria-hidden, set from a script that only reads the scroll position", () => {
-  assert.match(script, /import \{ activeCardId \} from "\.\.\/lib\/bonsai\/active-card\.ts"/);
-  assert.match(script, /data-card-zone/);
-  assert.match(script, /getBoundingClientRect/);
-  assert.match(script, /toggleAttribute\("data-active"/);
-  assert.match(script, /toggleAttribute\("inert"/);
-  assert.match(script, /setAttribute\("aria-hidden"/);
-  assert.match(script, /"scroll"/);
-  assert.match(script, /"resize"/);
-});
-
-test("without JavaScript every card stays visible in the document flow", () => {
-  assert.match(page, /<script is:inline>[^<]*classList\.add\("js"\)/, "the js class is set before the sections render");
-  assert.match(script, /classList\.remove\("js"\)/, "a failing script falls back to the plain layout");
-  for (const selector of styles.matchAll(/([^{}]+)\{[^}]*(?:position:\s*fixed|visibility:\s*hidden|opacity:\s*0\b)/g)) {
-    assert.match(selector[1], /html\.js/, `${selector[1].trim()} only applies with JavaScript`);
-  }
-  assert.match(rule("[data-card-pin]"), /display:\s*contents/, "no wrapper box without JavaScript");
-  assert.doesNotMatch(page, /<div[^>]*data-card-pin[^>]*\s(inert|aria-hidden)/, "the markup never ships hidden cards");
+test("no card fades or hides: no pinned layer, no active-card script", () => {
+  assert.doesNotMatch(page, /data-card-pin|data-card-zone|data-active|activeCardId|html\.js|classList\.add\("js"\)/);
+  assert.doesNotMatch(page, /<script>/, "the page needs no client script for the cards");
+  assert.doesNotMatch(styles, /visibility:\s*hidden|opacity:\s*0\b|position:\s*fixed/);
+  assert.doesNotMatch(page, /\sinert\b|aria-hidden="true">\s*<div class=\{panelClass/);
 });
 
 test("the scroll-driven exit animation of the old mobile cards is gone", () => {

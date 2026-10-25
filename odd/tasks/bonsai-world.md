@@ -20,6 +20,8 @@ Current phase: Gate 2 (graybox, camera endpoints, growth generator).
 
 - **S12 — Use the approved video, scrubbed smoothly (user).** "y por que no estas usando el video osea la gracia era hacerlo con el vide, de hecho el video se ve tal y como quiero a que muños te refieres? He revisado varias veces el video y es tal cual lo que quiero" and "chekea este proyecto por que aqui midu lo hce con un video y le queda tal y como quiero" (https://github.com/midudev/mcp-higgsfield-landing). The page plays the approved render (pre-T11 sprout) through `<video>`, scrubbed without stutter, as in that project.
 
+- **S13 — Cards scroll like a page (user).** "hay una cosa que no me termina d convencer y es que las tarjetas aparecen y desaparacen no da la sensacion de pagina que busco". Chosen option: "Como midu": each card is held while its chapter lasts and the page carries it away as the next one comes in, with no fades. Replaces the crossfade of S11a.
+
 ## Tasks
 
 | ID | Task | Specs | Route | Commit |
@@ -44,6 +46,7 @@ Current phase: Gate 2 (graybox, camera endpoints, growth generator).
 | T15 ✅ | Scrubber like midu's: always eased toward the scroll target (no hard jump), no new seek while seeking, video fetched whole as a blob, iOS play()/pause() prime on load; restores the `<video>` player from HEAD | S12, S9 | worker | — (uncommitted; see L38) |
 | T16 ✅ | Re-encode the approved render for scrubbing (GOP 6, BT.709/sRGB tags) and regenerate the poster from its frame 0 | S12 | inline | — (uncommitted; see L38) |
 | T17 ✅ | Revert the T11 sprout change in `bonsai_blender.py` so a future render matches the approved video | S12 | inline | — (`bonsai_blender/` is not versioned) |
+| T18 ✅ | Sticky cards per section (bottom on mobile, centred from md) instead of the fixed layer with a crossfade; remove `active-card.ts` and the card script | S13 | inline | see L42 |
 | T5 ✅ | Gate 3: realistic materials (PBR bark, moss, rocks, ceramic, soil) proven on the trunk chapter, plus the setting-sun lighting system across all chapters | S2, S5, S8 | worker, then parent | `0eea529`, `f8c959f` (Gate 3 user approval pending) |
 | T6 | Gates 4–6: transitions, mobile tier and performance budget | S2, S4 | pending | — |
 | T7 | Integrate into home with semantic DOM content, reduced-motion and no-WebGL fallback | S3, S5 | pending | — |
@@ -115,5 +118,7 @@ El ultimo segundo es muy oscuro completamente de noche, eso no me gusta quiero q
   - **Blender:** `bonsai_blender.py` is back to the pre-T11 version (the T11 version is kept in `.playwright-mcp/blender/bonsai_blender.T11_sprout_dropped.py`). The PNGs in `bonsai_blender/frames/` 0–152 are still the T11 re-render; the mp4 masters are the approved source.
 - **L39** (user): "vale ahora si, vamos con pequeños matices en la pagina de Hablemos pon los iosnos en vez de texto y el orden que sea el icono d linkedin, del mail y lueg github. Ademas quita de todas las tarejtas el encabezado de 01 - Semmilla etc..."
 - **L40** (evidence): Small task, inline. Two page tests went RED first, then GREEN; 127/127 pass. The 7 numbered eyebrows are gone and titles lost their top margin. "Hablemos" shows inline-SVG icon buttons (no new dependency) in the order LinkedIn, email, GitHub, each with an `aria-label`. Checked at 1440×900 and 390×844: 48 px and 44 px buttons, no eyebrow text on the page, 0 errors.
+- **L41** (user): "hay una cosa que no me termina d convencer y es que las tarjetas aparecen y desaparacen no da la sensacion de pagina que busco". Asked to choose between "Como midu" (sticky per chapter, carried away by the page) and free scrolling; the user chose "Como midu".
+- **L42** (evidence, T18): Five page tests RED first, then GREEN; 118/118 pass (the crossfade and `active-card` tests were removed with their code). In Chromium the page height is unchanged (8460 px at 1440×900), so the video anchors hold. At 41 scroll positions at least one card is always on screen. Across `trunk` the card enters, is held (desktop top 302 px, centred; mobile 557 px, bottom) and then leaves with the page. Career stops show 2–3 cards at once. 0 console errors.
 - **L9** (delivery): The branch holds 5 reviewable commits (~2.9k authored lines). Opening the PR(s) and how to split them stays the user's decision.
 - **L7** (decision): Graybox ships on a separate `/bonsai` route so the current home stays untouched until T7. Tests use the built-in `node --test` runner (Node 26 strips TypeScript natively), so no test dependency is added.
