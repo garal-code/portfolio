@@ -113,7 +113,7 @@ test("Hablemos is gone, but the finished stretch keeps its scroll so the video e
 
 const contactBar = page.match(/<nav\b[^>]*data-contact-bar[\s\S]*?<\/nav>/)?.[0] ?? "";
 
-test("a contact bar fixed at the top left shows LinkedIn, email, GitHub and Portfolio App, in that order", () => {
+test("a contact bar fixed at the top right shows LinkedIn, email, GitHub and Portfolio App, in that order", () => {
   assert.match(contactBar, /^<nav\b[^>]*aria-label="Contacto"/);
   const links = [...contactBar.matchAll(/<a\b([^>]*)>([\s\S]*?)<\/a>/g)];
   assert.deepEqual(
@@ -132,7 +132,8 @@ test("a contact bar fixed at the top left shows LinkedIn, email, GitHub and Port
   const bar = rule("[data-contact-bar]");
   assert.match(bar, /position:\s*fixed/, "visible during the whole scroll");
   assert.match(bar, /top:\s*[^;]+/);
-  assert.match(bar, /left:\s*[^;]+/);
+  assert.match(bar, /right:\s*[^;]+/);
+  assert.doesNotMatch(bar, /left:/, "top right corner, not left");
   assert.match(bar, /z-index:\s*(\d+)/);
 });
 
