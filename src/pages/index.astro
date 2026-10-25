@@ -30,23 +30,23 @@ const careerSlice = weight("branches") / careerJobs.length;
 // internal scroll keeps it from growing over the scene when its content grows
 // later (S7). From md up it is the 40% left column, vertically centred.
 //
-// Cards scroll like a page (S13): each one is sticky inside its own section (or
-// career stop), held at the bottom on mobile and at the centre from md while its
-// chapter lasts, then carried away by the page as the next one comes in. No
-// fades and no script: see `[data-chapter-card]` in the style below.
+// Cards flow in three blocks (S15): see the comment above the first block and
+// `[data-card-layer]` in the style below.
 //
-// The sections keep their scroll heights: the background player measures them.
-// On mobile the first one is one screen taller (`firstExtra`), as it has been
+// The chapter spacers keep their scroll heights: the background player measures
+// them. On mobile the first one is one screen taller (`firstExtra`), as it has been
 // since the cards were pinned to the bottom edge; changing it would move the
 // video anchors.
-const sectionClass =
-  "relative z-10 flex min-h-[var(--chapter-height)] items-end px-4 py-3 md:items-start md:px-16 md:py-10";
+const layerClass = "pointer-events-none relative z-10";
+const frameClass = "px-4 py-3 md:px-16 md:py-10";
+const columnClass = "pointer-events-auto flex flex-col gap-3 md:max-w-[40%] md:gap-6";
+const spacerClass = "min-h-[var(--chapter-height)]";
 const firstExtra = "max-md:min-h-[calc(var(--chapter-height)+100svh)]";
 // The cards float over the video as soft bubbles (`.bubble-card` below): large
 // radius, a light rim, an inner highlight and layered shadows. The fill is the
 // solid palette cream, so text keeps AA contrast over any frame.
 const panelClass =
-  "bubble-card max-h-[42svh] w-full overflow-y-auto bg-cream p-4 md:max-h-[80svh] md:max-w-[40%] md:p-6";
+  "bubble-card max-h-[42svh] w-full overflow-y-auto bg-cream p-4 md:max-h-[80svh] md:p-6";
 const titleClass =
   "font-display text-2xl font-extrabold tracking-tight text-forest md:text-4xl";
 const contactIconClass =
@@ -61,6 +61,9 @@ const chipClass = "bubble-chip rounded-full bg-sand px-2.5 py-0.5 md:px-3 md:py-
 ---
 
 <Layout>
+  <script is:inline>
+    document.documentElement.classList.add("js");
+  </script>
   <BonsaiVideo />
 
   <!-- Contact, fixed at the top right for the whole scroll. -->
@@ -94,174 +97,225 @@ const chipClass = "bubble-chip rounded-full bg-sand px-2.5 py-0.5 md:px-3 md:py-
     </ul>
   </nav>
 
-  <section
-    id="seed"
-    data-chapter="seed"
-    class={`${sectionClass} ${firstExtra}`}
-    style={sectionStyle("seed")}
-    aria-labelledby="seed-title"
-  >
-    <div class={panelClass} data-chapter-card>
-      <h1
-        id="seed-title"
-        class="mt-2 font-display text-3xl font-extrabold leading-[0.95] tracking-tight text-forest md:mt-3 md:text-5xl"
-      >
-        {personalInfo.name}
-      </h1>
-      <p class={bodyClass}>{personalInfo.bio}</p>
-      <ul class={chipListClass}>
-        {
-          interests.map((interest) => (
-            <li class={chipClass}>
-              {interest.title} · {interest.note}
-            </li>
-          ))
-        }
-      </ul>
+  <!-- Three blocks of cards (S15). Each block holds one column of cards in a
+       layer that stays on screen while the block lasts; a script glides the
+       column up with the scroll (lib/bonsai/card-flow.ts), so each card rests
+       in its place when the video shows its chapter and the next one arrives
+       while the last one leaves. After the layer come the chapter spacers: they
+       keep the scroll heights the video is measured from. -->
+  <div data-card-block="intro" class="relative">
+    <div data-card-layer class={layerClass}>
+      <div data-card-frame class={frameClass}>
+      <div data-card-column class={columnClass}>
+        <section id="seed" aria-labelledby="seed-title" class={panelClass} data-chapter-card>
+        <h1
+          id="seed-title"
+          class="mt-2 font-display text-3xl font-extrabold leading-[0.95] tracking-tight text-forest md:mt-3 md:text-5xl"
+        >
+          {personalInfo.name}
+        </h1>
+        <p class={bodyClass}>{personalInfo.bio}</p>
+        <ul class={chipListClass}>
+          {
+            interests.map((interest) => (
+              <li class={chipClass}>
+                {interest.title} · {interest.note}
+              </li>
+            ))
+          }
+        </ul>
+        </section>
+        <section id="sprout" aria-labelledby="sprout-title" class={panelClass} data-chapter-card>
+        <h2 id="sprout-title" class={titleClass}>Dónde empezó</h2>
+        <ul class="mt-3 space-y-2 text-sm text-body md:mt-4 md:space-y-3 md:text-base">
+          {
+            education.map((item) => (
+              <li>
+                <p class="font-semibold text-ink">{item.degree}</p>
+                <p class="text-sm text-meta">
+                  {item.institution} · {years(item.startYear, item.endYear)}
+                </p>
+              </li>
+            ))
+          }
+        </ul>
+        </section>
+        <section id="trunk" aria-labelledby="trunk-title" class={panelClass} data-chapter-card>
+        <h2 id="trunk-title" class={titleClass}>Los fundamentos</h2>
+        <p class={bodyClass}>{personalInfo.summary}</p>
+        <ul class={chipListClass}>
+          {skills.map((skill) => <li class={chipClass}>{skill}</li>)}
+        </ul>
+        </section>
+      </div>
+      </div>
     </div>
-  </section>
+    <!-- /layer -->
+    <div data-chapter="seed" data-flow-stop class={`${spacerClass} ${firstExtra}`} style={sectionStyle("seed")} aria-hidden="true"></div>
+    <div data-chapter="sprout" data-flow-stop class={spacerClass} style={sectionStyle("sprout")} aria-hidden="true"></div>
+    <div data-chapter="trunk" data-flow-stop class={spacerClass} style={sectionStyle("trunk")} aria-hidden="true"></div>
+  </div>
+  <!-- /block -->
 
-  <section
-    id="sprout"
-    data-chapter="sprout"
-    class={sectionClass}
-    style={sectionStyle("sprout")}
-    aria-labelledby="sprout-title"
-  >
-    <div class={panelClass} data-chapter-card>
-      <h2 id="sprout-title" class={titleClass}>Dónde empezó</h2>
-      <ul class="mt-3 space-y-2 text-sm text-body md:mt-4 md:space-y-3 md:text-base">
-        {
-          education.map((item) => (
-            <li>
-              <p class="font-semibold text-ink">{item.degree}</p>
-              <p class="text-sm text-meta">
-                {item.institution} · {years(item.startYear, item.endYear)}
-              </p>
-            </li>
-          ))
-        }
-      </ul>
+  <div data-card-block="career" class="relative">
+    <div data-card-layer class={layerClass}>
+      <div data-card-frame class={frameClass}>
+      <section id="branches" aria-labelledby="branches-title" data-card-column class={columnClass}>
+        <ol data-timeline class="m-0 list-none p-0">
+          {
+            careerJobs.map((job, index) => (
+              <li>
+                <article class={panelClass} data-chapter-card>
+                  {index === 0 && (
+                    <>
+                      <h2 id="branches-title" class={titleClass}>La carrera</h2>
+                    </>
+                  )}
+                  <p class="mt-3 font-display text-xl font-bold text-forest md:mt-4 md:text-2xl">
+                    {job.company}
+                  </p>
+                  <p class="text-sm text-meta">
+                    {job.role} · {years(job.startDate, job.endDate)}
+                  </p>
+                  <p class={bodyClass}>{job.summary}</p>
+                </article>
+              </li>
+            ))
+          }
+        </ol>
+      </section>
+      </div>
     </div>
-  </section>
-
-  <section
-    id="trunk"
-    data-chapter="trunk"
-    class={sectionClass}
-    style={sectionStyle("trunk")}
-    aria-labelledby="trunk-title"
-  >
-    <div class={panelClass} data-chapter-card>
-      <h2 id="trunk-title" class={titleClass}>Los fundamentos</h2>
-      <p class={bodyClass}>{personalInfo.summary}</p>
-      <ul class={chipListClass}>
-        {skills.map((skill) => <li class={chipClass}>{skill}</li>)}
-      </ul>
-    </div>
-  </section>
-
-  <section
-    id="branches"
-    data-chapter="branches"
-    class="relative z-10 min-h-[var(--chapter-height)] px-4 md:px-16"
-    style={sectionStyle("branches")}
-    aria-labelledby="branches-title"
-  >
-    <ol class="m-0 list-none p-0">
+    <!-- /layer -->
+    <div data-chapter="branches" class={spacerClass} style={sectionStyle("branches")} aria-hidden="true">
       {
-        careerJobs.map((job, index) => (
-          <li
-            data-branch-stop={index}
-            class="flex items-end py-3 md:items-start md:py-10"
-            style={`min-height: calc(${careerSlice} * 100svh);`}
-          >
-            <article class={panelClass} data-chapter-card>
-              {index === 0 && (
-                <>
-                  <h2 id="branches-title" class={titleClass}>La carrera</h2>
-                </>
-              )}
-              <p class="mt-3 font-display text-xl font-bold text-forest md:mt-4 md:text-2xl">
-                {job.company}
-              </p>
-              <p class="text-sm text-meta">
-                {job.role} · {years(job.startDate, job.endDate)}
-              </p>
-              <p class={bodyClass}>{job.summary}</p>
-            </article>
-          </li>
+        careerJobs.map((_, index) => (
+          <div data-branch-stop={index} data-flow-stop style={`min-height: calc(${careerSlice} * 100svh);`}></div>
         ))
       }
-    </ol>
-  </section>
-
-  <section
-    id="pruning"
-    data-chapter="pruning"
-    class={sectionClass}
-    style={sectionStyle("pruning")}
-    aria-labelledby="pruning-title"
-  >
-    <div class={panelClass} data-chapter-card>
-      <h2 id="pruning-title" class={titleClass}>Cómo trabaja</h2>
-      <ul class="mt-3 space-y-2 text-sm text-body md:mt-4 md:text-base">
-        {personalInfo.highlights.map((highlight) => <li>{highlight}</li>)}
-      </ul>
     </div>
-  </section>
+  </div>
+  <!-- /block -->
 
-  <section
-    id="pagoda"
-    data-chapter="pagoda"
-    class={sectionClass}
-    style={sectionStyle("pagoda")}
-    aria-labelledby="pagoda-title"
-  >
-    <div class={panelClass} data-chapter-card>
-      <h2 id="pagoda-title" class={titleClass}>{project.name}</h2>
-      <p class={bodyClass}>{project.description}</p>
-      <a
-        href={project.url}
-        class="bubble-button mt-3 inline-block rounded-full bg-forest px-5 py-2 text-sm font-bold text-cream md:mt-4"
-        rel="noopener"
-      >
-        Ver {project.name}
-      </a>
+  <div data-card-block="practice" class="relative">
+    <div data-card-layer class={layerClass}>
+      <div data-card-frame class={frameClass}>
+      <div data-card-column class={columnClass}>
+        <section id="pruning" aria-labelledby="pruning-title" class={panelClass} data-chapter-card>
+        <h2 id="pruning-title" class={titleClass}>Cómo trabajo</h2>
+        <ul class="mt-3 space-y-2 text-sm text-body md:mt-4 md:text-base">
+          {personalInfo.highlights.map((highlight) => <li>{highlight}</li>)}
+        </ul>
+        </section>
+        <section id="pagoda" aria-labelledby="pagoda-title" class={panelClass} data-chapter-card>
+        <h2 id="pagoda-title" class={titleClass}>{project.name}</h2>
+        <p class={bodyClass}>{project.description}</p>
+        <a
+          href={project.url}
+          class="bubble-button mt-3 inline-block rounded-full bg-forest px-5 py-2 text-sm font-bold text-cream md:mt-4"
+          rel="noopener"
+        >
+          Ver {project.name}
+        </a>
+        </section>
+      </div>
+      </div>
     </div>
-  </section>
+    <!-- /layer -->
+    <div data-chapter="pruning" data-flow-stop class={spacerClass} style={sectionStyle("pruning")} aria-hidden="true"></div>
+    <div data-chapter="pagoda" data-flow-stop class={spacerClass} style={sectionStyle("pagoda")} aria-hidden="true"></div>
+  </div>
+  <!-- /block -->
 
   <!-- The last stretch keeps its scroll height with no card, so the video
        ending (lanterns into a warm dusk) plays over the finished tree. -->
-  <section
-    id="finished"
-    data-chapter="finished"
-    class={sectionClass}
-    style={sectionStyle("finished")}
-    aria-hidden="true"
-  ></section>
+  <div data-chapter="finished" class={spacerClass} style={sectionStyle("finished")} aria-hidden="true"></div>
 </Layout>
+
+<script>
+  import { mountCardFlow } from "../lib/bonsai/card-flow-mount.ts";
+
+  let dispose: (() => void) | undefined;
+  try {
+    dispose = mountCardFlow();
+  } catch {
+    // Every card stays in the normal flow instead.
+    document.documentElement.classList.remove("js");
+  }
+  if (import.meta.hot) {
+    import.meta.hot.dispose(() => dispose?.());
+  }
+</script>
 
 
 <style is:global>
-  /* Cards scroll like a page (S13). Each card is sticky inside its own section
-     or career stop: on mobile it rides in with the section's bottom edge and is
-     held 0.75rem above the bottom of the viewport; from md it comes in with the
-     section top and is held at the vertical centre (`translate` centres the box
-     on the line). When its section ends, the page carries it away and the next
-     card comes in behind it. Nothing fades or hides, so it works without
-     JavaScript and with reduced motion alike. */
-  [data-chapter-card] {
+  /* Card flow (S15). With JavaScript (`html.js`, set before the cards render)
+     each block's layer covers exactly its block, over the chapter spacers that
+     give the page its height, and holds a one-screen frame that is sticky until
+     the block ends. The script moves the column inside the frame with a
+     transform. Without JavaScript the layer is a plain column at the top of
+     its block. */
+  html.js [data-card-layer] {
+    position: absolute;
+    inset: 0;
+  }
+
+  html.js [data-card-frame] {
     position: sticky;
-    bottom: 0.75rem;
+    top: 0;
+    height: 100svh;
+  }
+
+  html.js [data-card-column] {
+    will-change: transform;
+  }
+
+  /* Career timeline: a dot per job on the left, joined to the next one by a
+     thin cream line; the cards sit to the right of the rail. */
+  [data-timeline] {
+    --timeline-gap: 0.75rem;
+    --timeline-dot-top: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: var(--timeline-gap);
   }
 
   @media (min-width: 768px) {
-    [data-chapter-card] {
-      top: 50svh;
-      bottom: auto;
-      translate: 0 -50%;
+    [data-timeline] {
+      --timeline-gap: 1.5rem;
+      --timeline-dot-top: 1.85rem;
     }
+  }
+
+  [data-timeline] > li {
+    position: relative;
+    padding-left: 1.75rem;
+  }
+
+  [data-timeline] > li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: var(--timeline-dot-top);
+    z-index: 1;
+    width: 1rem;
+    height: 1rem;
+    border: 3px solid var(--color-cream);
+    border-radius: 9999px;
+    background: var(--color-forest);
+    box-shadow: 0 2px 6px -1px rgb(11 38 32 / 0.45);
+  }
+
+  [data-timeline] > li:not(:last-child)::after {
+    content: "";
+    position: absolute;
+    left: calc(0.5rem - 1px);
+    top: calc(var(--timeline-dot-top) + 0.5rem);
+    width: 2px;
+    height: calc(100% + var(--timeline-gap));
+    border-radius: 1px;
+    background: rgb(244 241 234 / 0.85);
+    box-shadow: 0 0 4px rgb(11 38 32 / 0.35);
   }
 
   /* Contact bar: top right corner, above the sections (z-index 10) and the

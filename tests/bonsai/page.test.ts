@@ -17,12 +17,12 @@ test("mobile chapter cards are compact and scroll inside when content grows", ()
 
 test("desktop cards keep the 40% left column", () => {
   const panel = classOf("panelClass");
-  assert.match(panel, /md:max-w-\[40%\]/);
+  assert.match(classOf("columnClass"), /md:max-w-\[40%\]/, "the column is the 40% left column");
   assert.match(panel, /md:max-h-\[(\d+)svh\]/, "bounded so a long card never leaves the viewport");
   assert.match(panel, /(^| )overflow-y-auto( |$)/, "and scrolls inside instead");
   assert.doesNotMatch(panel, /md:overflow-visible/);
   assert.match(panel, /md:p-6/);
-  assert.match(classOf("sectionClass"), /md:items-start md:px-16/);
+  assert.match(classOf("frameClass"), /md:px-16/);
 });
 
 test("chapter cards, chips and the call to action use the bubble surface with depth", () => {
@@ -36,60 +36,99 @@ test("chapter cards, chips and the call to action use the bubble surface with de
   assert.match(page, /prefers-reduced-motion:\s*reduce[\s\S]*bubble-card/, "the hover lift respects reduced motion");
 });
 
-// --- cards that scroll like a page (S13) ---------------------------------------
+// --- three blocks of cards that flow (S15) ------------------------------------
 
 const styles = page.match(/<style is:global>([\s\S]*)<\/style>/)?.[1] ?? "";
 const rule = (selector: string) => {
   const escaped = selector.replace(/[.*+?^${}()|[\]\\>]/g, "\\$&");
   return styles.match(new RegExp(`${escaped}\\s*\\{([^}]*)\\}`))?.[1] ?? "";
 };
+const block = (name: string) => page.match(new RegExp(`<div data-card-block="${name}"[\\s\\S]*?<!-- /block -->`))?.[0] ?? "";
+const layerOf = (markup: string) => markup.match(/<div data-card-layer[\s\S]*?<!-- \/layer -->/)?.[0] ?? "";
 
-test("every card is a direct child of its own section or career stop", () => {
-  const cards = page.match(/<(?:div|article)\b[^>]*data-chapter-card/g) ?? [];
-  assert.equal(cards.length, 6, "5 chapter cards plus the one rendered per career stop; finished has none");
-  for (const id of ["seed", "sprout", "trunk", "pruning", "pagoda"]) {
-    assert.match(page, new RegExp(`<section\\s+id="${id}"[^>]*>\\s*<div class=\\{panelClass\\} data-chapter-card>`), `${id} card sits in its section`);
+test("the cards come in three blocks: intro, career and practice, in page order", () => {
+  const order = [...page.matchAll(/data-card-block="(\w+)"/g)].map(([, name]) => name);
+  assert.deepEqual(order, ["intro", "career", "practice"]);
+  const ids = (markup: string) => [...layerOf(markup).matchAll(/<section\s+id="(\w+)"/g)].map(([, id]) => id);
+  assert.deepEqual(ids(block("intro")), ["seed", "sprout", "trunk"]);
+  assert.deepEqual(ids(block("career")), ["branches"]);
+  assert.deepEqual(ids(block("practice")), ["pruning", "pagoda"]);
+});
+
+test("each block has one layer with one column of cards, and one stop per card", () => {
+  for (const [name, cards] of [["intro", 3], ["career", 1], ["practice", 2]] as const) {
+    const markup = block(name);
+    assert.equal((markup.match(/data-card-layer/g) ?? []).length, 1, `${name}: one layer`);
+    assert.equal((markup.match(/data-card-column/g) ?? []).length, 1, `${name}: one column`);
+    assert.equal((layerOf(markup).match(/data-chapter-card/g) ?? []).length, cards, `${name}: cards in the column`);
+    const stops = markup.slice(markup.indexOf("<!-- /layer -->")).match(/data-flow-stop/g) ?? [];
+    assert.equal(stops.length, cards, `${name}: one stop per card (career renders one card per job)`);
   }
-  assert.match(page, /data-branch-stop=\{index\}[^>]*>\s*<article class=\{panelClass\} data-chapter-card>/);
 });
 
-test("cards are sticky: at the bottom on mobile, centred from md, and move with the page between chapters", () => {
-  const card = rule("[data-chapter-card]");
-  assert.match(card, /position:\s*sticky/);
-  assert.match(card, /bottom:\s*0\.75rem/, "mobile: held at the bottom edge");
-  const desktop = styles.match(/@media \(min-width: 768px\)\s*\{\s*\[data-chapter-card\]\s*\{([^}]*)\}/)?.[1] ?? "";
-  assert.match(desktop, /top:\s*50svh/, "md: held at the vertical centre");
-  assert.match(desktop, /translate:\s*0 -50%/);
-  assert.match(desktop, /bottom:\s*auto/);
-  assert.match(classOf("sectionClass"), /(^| )items-end( |$)/, "mobile: the card rides the section's bottom edge in");
-  assert.match(classOf("sectionClass"), /md:items-start/, "md: the card enters with the section top");
-  assert.match(page, /data-branch-stop=\{index\}[\s\S]*?class="flex items-end py-3 md:items-start md:py-10"/);
+test("the video still measures the chapters: spacers keep data-chapter and the scroll heights", () => {
+  const spacers = [...page.matchAll(/<div\s+data-chapter="(\w+)"([^>]*)>/g)];
+  assert.deepEqual(spacers.map(([, id]) => id), ["seed", "sprout", "trunk", "branches", "pruning", "pagoda", "finished"]);
+  for (const [, id, attributes] of spacers) {
+    assert.match(attributes, new RegExp(`style=\\{sectionStyle\\("${id}"\\)\\}`), `${id} keeps its height`);
+    assert.match(attributes, /aria-hidden="true"/, `${id} is only scroll, not content`);
+  }
+  assert.match(page, /data-branch-stop=\{index\}[^>]*data-flow-stop[^>]*style=\{`min-height: calc\(\$\{careerSlice\} \* 100svh\);`\}/);
+  assert.match(classOf("spacerClass"), /min-h-\[var\(--chapter-height\)\]/);
+  assert.match(page, /const firstExtra = "max-md:min-h-\[calc\(var\(--chapter-height\)\+100svh\)\]"/);
+  assert.doesNotMatch(layerOf(block("intro")) + layerOf(block("career")) + layerOf(block("practice")), /data-chapter=|data-branch-stop/, "cards never carry the measured attributes");
 });
 
-test("sticky works on this page: main clips instead of creating a scroll container", () => {
-  assert.match(rule("main"), /overflow:\s*clip/);
+test("with JavaScript the layer spans its block and its frame stays on screen until the block ends", () => {
+  const layer = rule("html.js [data-card-layer]");
+  assert.match(layer, /position:\s*absolute/);
+  assert.match(layer, /inset:\s*0/, "the layer covers exactly its block, so the spacers keep the page height");
+  const frame = rule("html.js [data-card-frame]");
+  assert.match(frame, /position:\s*sticky/);
+  assert.match(frame, /top:\s*0/);
+  assert.match(frame, /height:\s*100svh/);
+  assert.doesNotMatch(styles, /margin-bottom:\s*-100svh/, "a negative margin kept the frame pinned past its block");
+  for (const name of ["intro", "career", "practice"]) {
+    assert.match(layerOf(block(name)), /<div data-card-layer[^>]*>\s*<div data-card-frame[^>]*>/, `${name}: layer, then frame`);
+  }
+  assert.match(rule("html.js [data-card-column]"), /will-change:\s*transform/);
+  assert.match(rule("main"), /overflow:\s*clip/, "sticky works: main clips instead of becoming a scroll container");
 });
 
-test("no card fades or hides: no pinned layer, no active-card script", () => {
-  assert.doesNotMatch(page, /data-card-pin|data-card-zone|data-active|activeCardId|html\.js|classList\.add\("js"\)/);
-  assert.doesNotMatch(page, /<script>/, "the page needs no client script for the cards");
+test("a script glides each column; without it every card stays in the normal flow", () => {
+  assert.match(page, /<script is:inline>[^<]*classList\.add\("js"\)/, "the js class is set before the cards render");
+  const script = page.match(/<script>([\s\S]*?)<\/script>/)?.[1] ?? "";
+  assert.match(script, /import \{ mountCardFlow \} from "\.\.\/lib\/bonsai\/card-flow-mount\.ts"/);
+  assert.match(script, /classList\.remove\("js"\)/, "a failing script falls back to the plain flow");
+  for (const [, selector] of styles.replace(/\/\*[\s\S]*?\*\//g, "").matchAll(/([^{}]+)\{[^}]*position:\s*sticky/g)) {
+    assert.match(selector!, /html\.js/, `${selector!.trim()} only applies with JavaScript`);
+  }
+});
+
+test("no card fades, hides or is fixed: only the contact bar is fixed", () => {
+  assert.doesNotMatch(page, /data-card-pin|data-card-zone|data-active|activeCardId/);
   assert.doesNotMatch(styles, /visibility:\s*hidden|opacity:\s*0\b/);
   const fixed = [...styles.replace(/\/\*[\s\S]*?\*\//g, "").matchAll(/([^{}]+)\{[^}]*position:\s*fixed/g)].map(([, selector]) => selector.trim());
-  assert.deepEqual(fixed, ["[data-contact-bar]"], "only the contact bar is fixed, never a card");
-  assert.doesNotMatch(page, /\sinert\b|aria-hidden="true">\s*<div class=\{panelClass/);
+  assert.deepEqual(fixed, ["[data-contact-bar]"]);
+  assert.doesNotMatch(page, /animation-timeline|view-timeline|animation-range/);
 });
 
-test("the scroll-driven exit animation of the old mobile cards is gone", () => {
-  assert.doesNotMatch(page, /animation-timeline|view-timeline|bonsai-card-exit|animation-range/);
+test("La carrera is a timeline: one dot per job, joined by a line on the left", () => {
+  const career = layerOf(block("career"));
+  assert.match(career, /<ol\b[^>]*data-timeline/);
+  assert.match(career, /careerJobs\.map\(\(job, index\) => \(\s*<li>\s*<article class=\{panelClass\} data-chapter-card>/);
+  assert.match(rule("[data-timeline] > li"), /padding-left:/, "the cards leave room for the rail");
+  const dot = rule("[data-timeline] > li::before");
+  assert.match(dot, /border-radius:\s*9999px/, "a round dot per card");
+  assert.match(dot, /position:\s*absolute/);
+  const line = rule("[data-timeline] > li:not(:last-child)::after");
+  assert.match(line, /width:\s*2px/, "a thin line");
+  assert.match(line, /height:\s*calc\(100% \+ var\(--timeline-gap\)\)/, "it reaches the next dot");
 });
 
-test("sections keep their ids, labels and scroll heights for the background player", () => {
-  assert.equal((page.match(/data-chapter="/g) ?? []).length, 7);
-  assert.equal((page.match(/aria-labelledby="/g) ?? []).length, 6, "finished has no card and no heading");
-  assert.match(page, /style=\{sectionStyle\("seed"\)\}/);
-  assert.match(page, /style=\{`min-height: calc\(\$\{careerSlice\} \* 100svh\);`\}/);
-  assert.match(classOf("sectionClass"), /min-h-\[var\(--chapter-height\)\]/);
-  assert.match(page, /const firstExtra = "max-md:min-h-\[calc\(var\(--chapter-height\)\+100svh\)\]"/);
+test("the practice card speaks in first person: Cómo trabajo", () => {
+  assert.match(page, /<h2 id="pruning-title" class=\{titleClass\}>Cómo trabajo<\/h2>/);
+  assert.doesNotMatch(page, /Cómo trabaja/);
 });
 
 // --- card headings and contact icons -------------------------------------------
@@ -104,11 +143,9 @@ test("no card carries the numbered chapter eyebrow (01 · Semilla …)", () => {
 
 test("Hablemos is gone, but the finished stretch keeps its scroll so the video ending plays", () => {
   assert.doesNotMatch(page, /Hablemos|finished-title/);
-  const finished = page.match(/<section\s+id="finished"[\s\S]*?<\/section>/)?.[0] ?? "";
-  assert.match(finished, /data-chapter="finished"/);
+  const finished = page.match(/<div\s+data-chapter="finished"[^>]*><\/div>/)?.[0] ?? "";
   assert.match(finished, /style=\{sectionStyle\("finished"\)\}/);
   assert.match(finished, /aria-hidden="true"/, "an empty stretch of scroll, not a landmark");
-  assert.doesNotMatch(finished, /data-chapter-card|<a\b/);
 });
 
 const contactBar = page.match(/<nav\b[^>]*data-contact-bar[\s\S]*?<\/nav>/)?.[0] ?? "";
