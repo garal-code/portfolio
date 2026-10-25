@@ -1,0 +1,254 @@
+---
+import Layout from "../layouts/Layout.astro";
+import BonsaiWorld from "../components/bonsai/BonsaiWorld.astro";
+import { careerOrder } from "../lib/bonsai/career.ts";
+import { CHAPTERS, type ChapterId } from "../lib/bonsai/chapters.ts";
+import {
+  education,
+  interests,
+  jobs,
+  personalInfo,
+  project,
+  skills,
+} from "../data/resume.ts";
+
+// Graybox page (Gate 2): one section per chapter, in the approved S3 order.
+// Section height follows the chapter scrollWeight; the canvas is fixed behind.
+const weight = (id: ChapterId) =>
+  CHAPTERS.find((chapter) => chapter.id === id)!.scrollWeight;
+const sectionStyle = (id: ChapterId) =>
+  `--chapter-height: calc(${weight(id)} * 100svh);`;
+
+const years = (start: string, end?: string) => `${start}–${end ?? "hoy"}`;
+// resume.ts lists jobs newest first; the branches grow oldest first, the same
+// order the generator uses.
+const careerJobs = careerOrder(jobs);
+const careerSlice = weight("branches") / careerJobs.length;
+
+// Below md the card is compact and pinned to the bottom of the viewport (the
+// copy safe zone, ~45%), so the 3D scene stays visible above it. A max-height
+// with internal scroll keeps it from growing over the scene when its content
+// grows later (S7). From md up it is the 40% left column.
+//
+// Chapter i is active while the viewport TOP is inside its scroll range, so its
+// card has to stay pinned to the viewport BOTTOM one screen further down. On
+// mobile the first section is therefore one screen taller (`firstExtra`): every
+// later section then sits exactly where the viewport bottom is during its chapter.
+const sectionClass =
+  "relative z-10 flex min-h-[var(--chapter-height)] items-end px-4 py-3 md:items-center md:px-16 md:py-10";
+const firstExtra = "max-md:min-h-[calc(var(--chapter-height)+100svh)]";
+const panelClass =
+  "sticky bottom-3 max-h-[42svh] w-full overflow-y-auto rounded-2xl border border-forest/10 bg-cream/90 p-4 backdrop-blur-sm md:static md:max-h-none md:max-w-[40%] md:overflow-visible md:bg-cream/85 md:p-6";
+const eyebrowClass =
+  "text-xs font-bold uppercase tracking-[0.2em] text-sage-dark";
+const titleClass =
+  "mt-2 font-display text-2xl font-extrabold tracking-tight text-forest md:mt-3 md:text-4xl";
+const bodyClass =
+  "mt-2 text-sm leading-relaxed text-body md:mt-3 md:text-base";
+const chipListClass =
+  "mt-3 flex flex-wrap gap-1.5 text-xs text-forest md:mt-4 md:gap-2 md:text-sm";
+const chipClass = "rounded-full bg-sand px-2.5 py-0.5 md:px-3 md:py-1";
+---
+
+<Layout
+  title={`Bonsai — ${personalInfo.name}`}
+  description={personalInfo.summary}
+>
+  <BonsaiWorld />
+
+  <section
+    id="seed"
+    data-chapter="seed"
+    class={`${sectionClass} ${firstExtra}`}
+    style={sectionStyle("seed")}
+    aria-labelledby="seed-title"
+  >
+    <div class={panelClass} data-chapter-card>
+      <p class={eyebrowClass}>01 · Semilla</p>
+      <h1
+        id="seed-title"
+        class="mt-2 font-display text-3xl font-extrabold leading-[0.95] tracking-tight text-forest md:mt-3 md:text-5xl"
+      >
+        {personalInfo.name}
+      </h1>
+      <p class={bodyClass}>{personalInfo.bio}</p>
+      <ul class={chipListClass}>
+        {
+          interests.map((interest) => (
+            <li class={chipClass}>
+              {interest.title} · {interest.note}
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
+  <section
+    id="sprout"
+    data-chapter="sprout"
+    class={sectionClass}
+    style={sectionStyle("sprout")}
+    aria-labelledby="sprout-title"
+  >
+    <div class={panelClass} data-chapter-card>
+      <p class={eyebrowClass}>02 · Brote</p>
+      <h2 id="sprout-title" class={titleClass}>Dónde empezó</h2>
+      <ul class="mt-3 space-y-2 text-sm text-body md:mt-4 md:space-y-3 md:text-base">
+        {
+          education.map((item) => (
+            <li>
+              <p class="font-semibold text-ink">{item.degree}</p>
+              <p class="text-sm text-meta">
+                {item.institution} · {years(item.startYear, item.endYear)}
+              </p>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
+  <section
+    id="trunk"
+    data-chapter="trunk"
+    class={sectionClass}
+    style={sectionStyle("trunk")}
+    aria-labelledby="trunk-title"
+  >
+    <div class={panelClass} data-chapter-card>
+      <p class={eyebrowClass}>03 · Tronco</p>
+      <h2 id="trunk-title" class={titleClass}>Los fundamentos</h2>
+      <p class={bodyClass}>{personalInfo.summary}</p>
+      <ul class={chipListClass}>
+        {skills.map((skill) => <li class={chipClass}>{skill}</li>)}
+      </ul>
+    </div>
+  </section>
+
+  <section
+    id="branches"
+    data-chapter="branches"
+    class="relative z-10 min-h-[var(--chapter-height)] px-4 md:px-16"
+    style={sectionStyle("branches")}
+    aria-labelledby="branches-title"
+  >
+    <ol class="m-0 list-none p-0">
+      {
+        careerJobs.map((job, index) => (
+          <li
+            class="flex items-end py-3 md:items-center md:py-10"
+            style={`min-height: calc(${careerSlice} * 100svh);`}
+          >
+            <article class={panelClass} data-chapter-card>
+              {index === 0 && (
+                <>
+                  <p class={eyebrowClass}>04 · Ramas</p>
+                  <h2 id="branches-title" class={titleClass}>La carrera</h2>
+                </>
+              )}
+              <p class="mt-3 font-display text-xl font-bold text-forest md:mt-4 md:text-2xl">
+                {job.company}
+              </p>
+              <p class="text-sm text-meta">
+                {job.role} · {years(job.startDate, job.endDate)}
+              </p>
+              <p class={bodyClass}>{job.summary}</p>
+            </article>
+          </li>
+        ))
+      }
+    </ol>
+  </section>
+
+  <section
+    id="pruning"
+    data-chapter="pruning"
+    class={sectionClass}
+    style={sectionStyle("pruning")}
+    aria-labelledby="pruning-title"
+  >
+    <div class={panelClass} data-chapter-card>
+      <p class={eyebrowClass}>05 · Poda</p>
+      <h2 id="pruning-title" class={titleClass}>Cómo trabaja</h2>
+      <ul class="mt-3 space-y-2 text-sm text-body md:mt-4 md:text-base">
+        {personalInfo.highlights.map((highlight) => <li>{highlight}</li>)}
+      </ul>
+    </div>
+  </section>
+
+  <section
+    id="pagoda"
+    data-chapter="pagoda"
+    class={sectionClass}
+    style={sectionStyle("pagoda")}
+    aria-labelledby="pagoda-title"
+  >
+    <div class={panelClass} data-chapter-card>
+      <p class={eyebrowClass}>06 · Pagoda</p>
+      <h2 id="pagoda-title" class={titleClass}>{project.name}</h2>
+      <p class={bodyClass}>{project.description}</p>
+      <a
+        href={project.url}
+        class="mt-3 inline-block rounded-full bg-forest px-5 py-2 text-sm font-bold text-cream md:mt-4"
+        rel="noopener"
+      >
+        Ver {project.name}
+      </a>
+    </div>
+  </section>
+
+  <section
+    id="finished"
+    data-chapter="finished"
+    class={sectionClass}
+    style={sectionStyle("finished")}
+    aria-labelledby="finished-title"
+  >
+    <div class={panelClass} data-chapter-card>
+      <p class={eyebrowClass}>07 · Bonsai terminado</p>
+      <h2 id="finished-title" class={titleClass}>Hablemos</h2>
+      <ul class="mt-3 space-y-2 text-sm text-forest underline md:mt-4 md:text-base">
+        <li><a href={`mailto:${personalInfo.email}`}>{personalInfo.email}</a></li>
+        <li><a href={personalInfo.links.github} rel="noopener">GitHub</a></li>
+        <li><a href={personalInfo.links.linkedin} rel="noopener">LinkedIn</a></li>
+      </ul>
+    </div>
+  </section>
+</Layout>
+
+<style is:global>
+  /* Layout wraps pages in `overflow-hidden`, which turns <main> into a scroll
+     container and disables the sticky mobile cards. `clip` still crops the
+     overflow but creates no scroll container. */
+  main {
+    overflow: clip;
+  }
+
+  /* Mobile: once a card is released and rides up over the scene, fade it out
+     before it reaches the subject. The timeline belongs to the (non-sticky)
+     box that holds the card: the card is released when that box's bottom edge
+     reaches the viewport bottom, i.e. 100svh before the end of its `cover`
+     range, and is gone about 40svh later. A sticky card cannot be its own subject:
+     browsers measure its whole sticky travel. Browsers without scroll-driven
+     animations simply keep the card scrolling away. */
+  @media (max-width: 767px) {
+    @supports (animation-timeline: view()) {
+      :is(section, li):has(> [data-chapter-card]) {
+        view-timeline: --bonsai-card-box block;
+      }
+      [data-chapter-card] {
+        animation: bonsai-card-exit linear both;
+        animation-timeline: --bonsai-card-box;
+        animation-range: cover calc(100% - 90svh) cover calc(100% - 62svh);
+      }
+    }
+  }
+
+  @keyframes bonsai-card-exit {
+    to {
+      opacity: 0;
+      visibility: hidden;
+    }
+  }
+</style>
