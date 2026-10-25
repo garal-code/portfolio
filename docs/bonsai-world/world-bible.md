@@ -90,14 +90,14 @@ Copy comes from `src/data/resume.ts`; no new facts are invented.
 | 3 | `trunk` | The fundamentals | Trunk thickens; copper wire spirals around it in 5 turns (S, O, L, I, D) | Vertical growth; wire draws on | `skills`, `personalInfo.summary` | 1.4 |
 | 4 | `branches` | The career | Four branches grow bottom-up in chronological order, each with a gold annotation callout | Camera rises along the trunk, one stop per branch | `jobs` (GMV 2018–21 · Futurespace 2021–22 · Scalian 2022–25 · Santander 2025–today) | 2.4 |
 | 5 | `pruning` | How he works | Excess twigs are cut and fall; foliage pads condense into clean shapes | First subtraction; golden-hour light | `personalInfo.highlights` (Clean Code, doing things right) | 1.2 |
-| 6 | `pagoda` | What he builds on his own | The pagoda beside the tree lights up; lanterns along the stairs turn on | Dusk; camera moves to the pagoda | `project` (Tu Cartera) | 1.2 |
+| 6 | `pagoda` | What he builds on his own | The pagoda beside the tree lights up; lanterns along the stairs turn on | Dusk; camera moves to the pagoda | `project` (Portfolio App) | 1.2 |
 | 7 | `finished` | Let's talk | Camera pulls back: the finished bonsai on a windowsill at dusk | Full reveal of the world | Contact links (contact band) | 1.0 |
 
 Each annotation in chapter 4 mirrors a DOM list item, so the career is readable without WebGL.
 
 ## Video background (S9)
 
-The page background is the user's Blender render, scrubbed by scroll, instead of the real-time world (L17, L21). Sections 5 to 8 describe the Three.js world and are **superseded by the video for `/bonsai`**; they stay for reference. Chapters, copy, cards, the 40% left copy column and the mobile bottom cards are unchanged.
+The page background is the user's Blender render, scrubbed by scroll, instead of the real-time world (L17, L21). Sections 5 to 8 describe the Three.js world and are **superseded by the video on the home page (`/`; it was `/bonsai` until L50)**; they stay for reference. Chapters, copy, cards, the 40% left copy column and the mobile bottom cards are unchanged.
 
 **Asset.** `public/bonsai/video/bonsai-1080p.mp4`: the final Blender render the user approved (2026-10-22, Cycles, 64 samples; L34), 1920x1080, 30 fps, 20.0 s, 600 frames, no audio, 13.4 MB. It is re-encoded from `bonsai_blender/bonsai_scroll_world_1080p.mp4` (CRF 17 master) for scrubbing, like midudev/mcp-higgsfield-landing: H.264 CRF 28, a keyframe every 6 frames, and colour tagged BT.709 with the sRGB curve so the browser paints it like the poster:
 

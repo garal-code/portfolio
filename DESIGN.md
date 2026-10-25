@@ -190,6 +190,8 @@ components:
 
 Garal is a personal brand, not a SaaS product. The page should read like the cover and contents of a well-made technical magazine: one confident name, one clear statement of who the person is, then the evidence (project, experience, education, stack) and a direct way to get in touch.
 
+> **Home page (2026-10-25):** the root page (`/`) is the bonsai video world described in "Video world" below and in `docs/bonsai-world/world-bible.md`. The forest band, hero, journey, project panel and contact band sections describe the retired static home (`Hero`, `Journey` and `Footer` were removed); they remain the reference for any future static page.
+
 The atmosphere is **warm, grounded and editorial**. A deep **forest band** (`{colors.forest}`) opens the page and carries the name, tagline and interests in cream. The rest of the page sits on a **paper-cream canvas** (`{colors.cream}`) with white content cards. A single **gold accent** (`{colors.gold}`) marks the moments that matter: the tagline, the navigation and the closing contact band.
 
 **Key Characteristics:**
@@ -285,13 +287,13 @@ Big type, tight blocks. Inside a block, elements sit close (10–20px gaps) so e
 
 ## Elevation & Depth
 
-The static pages are intentionally **flat**, with no box shadows. The one exception is the video world (`/bonsai`, see below), where cards float over moving footage and use the bubble surface.
+The static pages are intentionally **flat**, with no box shadows. The one exception is the video world (the home page, `/`, see below), where cards float over moving footage and use the bubble surface.
 
 ### Bubble surface (video world only)
 
-Chapter cards over the video are soft rounded bubbles: 28px radius, a 1px white rim at 65%, a cream fill (95% on mobile, 92% from `md`) with a white specular sheen near the top left, an inner top highlight, a soft inner shade at the bottom, layered forest-tinted drop shadows and an 18px backdrop blur. On hover (desktop only) the card lifts 4px with a deeper shadow; with `prefers-reduced-motion` it does not move. Chips (`bubble-chip`) and the primary call to action (`bubble-button`) share the same rim-and-shadow language at a smaller scale. Text contrast is measured against the cream fill over a black frame and stays at least 4.5:1.
+Chapter cards over the video are soft rounded bubbles: 28px radius, a 1px white rim at 65%, a solid palette-cream fill (`{colors.cream}`, opaque, no white sheen) with a soft sand shade toward the bottom right, an inner top highlight, a soft inner shade at the bottom and layered forest-tinted drop shadows. On hover (desktop only) the card lifts 4px with a deeper shadow; with `prefers-reduced-motion` it does not move. Chips (`bubble-chip`) and the primary call to action (`bubble-button`) share the same rim-and-shadow language at a smaller scale. Because the fill is opaque, text contrast is the plain cream contrast and stays at least 4.5:1 over any frame. The cards open with their title, with no numbered eyebrow ("01 · Semilla"). There is no closing card: the last stretch of scroll shows only the finished tree. Contact lives in a bar fixed at the top right corner for the whole page (`data-contact-bar`, inset like the sections' side padding): round `bubble-chip` icon buttons, 44px on mobile and 48px from `md`, in the order LinkedIn, email, GitHub, then a forest `bubble-button` with the personal project's name ("Portfolio App"). Each icon link has an `aria-label` and its SVG is `aria-hidden`. Centred desktop cards are at most 80svh tall so they never reach under the bar.
 
-The cards are pinned: with JavaScript every card sits in the same place for the whole page, at the bottom of the viewport on mobile (under 42svh tall) and vertically centred in the left column from `md`, and it never scrolls with the page. Only the card of the section (or career stop) that holds the viewport's vertical centre is visible; when the chapter changes the old card fades out and the new one fades in over 350ms with a slight 8px rise. Hidden cards are `inert` and `aria-hidden`. With `prefers-reduced-motion` the switch is instant, and without JavaScript every card stays visible in the normal flow of its section.
+The cards scroll like a page, as on midudev's scroll-world landing: each card is `position: sticky` inside its own section (or career stop). On mobile it rides in with the section's bottom edge and is held 0.75rem above the bottom of the viewport (under 42svh tall); from `md` it comes in from below and is held at the vertical centre of the left column. When its section ends, the page carries it away and the next card comes in behind it, so a screen is never empty and nothing fades or hides. Career stops are 0.6 screens tall, so two or three career cards can be on screen at once, like a timeline. It needs no JavaScript and behaves the same with `prefers-reduced-motion`. `<main>` uses `overflow: clip` on this page, because `overflow: hidden` would freeze the sticky cards.
 
 Depth comes from three devices:
 1. **Color blocking:** forest band vs cream canvas.
