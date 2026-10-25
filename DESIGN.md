@@ -285,7 +285,13 @@ Big type, tight blocks. Inside a block, elements sit close (10–20px gaps) so e
 
 ## Elevation & Depth
 
-The system is intentionally **flat**. There are no box shadows anywhere.
+The static pages are intentionally **flat**, with no box shadows. The one exception is the video world (`/bonsai`, see below), where cards float over moving footage and use the bubble surface.
+
+### Bubble surface (video world only)
+
+Chapter cards over the video are soft rounded bubbles: 28px radius, a 1px white rim at 65%, a cream fill (95% on mobile, 92% from `md`) with a white specular sheen near the top left, an inner top highlight, a soft inner shade at the bottom, layered forest-tinted drop shadows and an 18px backdrop blur. On hover (desktop only) the card lifts 4px with a deeper shadow; with `prefers-reduced-motion` it does not move. Chips (`bubble-chip`) and the primary call to action (`bubble-button`) share the same rim-and-shadow language at a smaller scale. Text contrast is measured against the cream fill over a black frame and stays at least 4.5:1.
+
+The cards are pinned: with JavaScript every card sits in the same place for the whole page, at the bottom of the viewport on mobile (under 42svh tall) and vertically centred in the left column from `md`, and it never scrolls with the page. Only the card of the section (or career stop) that holds the viewport's vertical centre is visible; when the chapter changes the old card fades out and the new one fades in over 350ms with a slight 8px rise. Hidden cards are `inert` and `aria-hidden`. With `prefers-reduced-motion` the switch is instant, and without JavaScript every card stays visible in the normal flow of its section.
 
 Depth comes from three devices:
 1. **Color blocking:** forest band vs cream canvas.
@@ -351,13 +357,13 @@ Full-width gold panel, 20px radius, closing the page. A `display-sm` question on
 - Open every page with the forest band and close it with the gold contact band.
 - Keep gold as the single accent. If something needs emphasis, make it bigger in Bricolage Grotesque before reaching for a new color.
 - Use green-tinted neutrals (ink, body, sage, meta) for text. Never pure black or neutral grey.
-- Keep surfaces flat and let color blocking create hierarchy.
+- Keep static surfaces flat and let color blocking create hierarchy. Over the video, use the bubble surface.
 - Write UI copy in Spanish, in the first person and plainly.
 - Respect `prefers-reduced-motion` in every new animation.
 
 ### Don't
 - Don't add a second accent color (no blue links, no purple gradients, no red CTAs).
-- Don't add box shadows, glassmorphism or gradient meshes.
+- Don't add box shadows, glassmorphism or gradient meshes to static pages; the bubble surface is reserved for cards over the video world.
 - Don't use Bricolage Grotesque for paragraphs or DM Sans for headlines.
 - Don't put gold text on cream or white; it fails contrast. Gold is a fill on light surfaces and a text color only on forest.
 - Don't use pure white as the page background. White is only for cards on cream.
@@ -398,4 +404,4 @@ Full-width gold panel, 20px radius, closing the page. A `display-sm` question on
 - A `dark` Tailwind variant is declared in `global.css`, but there is no dark theme yet. The forest band works as the dark surface for now.
 - Date ranges and the page title use an em dash (`2019 — 2023`, `Name — Title`). Keep this consistent or replace it everywhere at once.
 - There is no logo or wordmark token; the name set in `display-hero` acts as the wordmark.
-- The 3D scroll world (a growing bonsai) is specified in `docs/bonsai-world/world-bible.md`. It uses the same palette roles (forest for foliage, cream for ceramic and stone, gold for practical light and annotations) and adds natural greens for 3D only. No red or vermilion.
+- The 3D scroll world (a growing bonsai) is specified in `docs/bonsai-world/world-bible.md`. It uses the same palette roles (forest for foliage, cream for ceramic and stone, gold for practical light and annotations) and adds natural greens for the world only. Vermilion is allowed on the world's traditional architecture (pagoda, torii) but never in the UI, whose only accent remains gold.

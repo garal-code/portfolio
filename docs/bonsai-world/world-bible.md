@@ -54,7 +54,7 @@ The DOM keeps the `DESIGN.md` tokens unchanged. The 3D world uses the same hue f
 | Warm practical | `{colors.gold}` ≈ #f3b94c | Lanterns, pagoda windows and annotation lines. |
 | Story accent | `{colors.gold}` | The single accent, same rule as the DOM. |
 
-Forbidden: red or vermilion (the skill's Kage demo owns that look), purple, neon.
+Vermilion is allowed for traditional architecture in the world (pagoda, torii), as part of the aesthetic the user chose for the rendered video (2026-10-22). It stays in the background imagery: the UI accent is still gold only. Forbidden: purple, neon.
 
 **Color arc:** chapters 1–4 use soft daylight (neutral, slightly cool), chapter 5 golden hour, and chapters 6–7 dusk lit by gold practicals.
 
@@ -95,7 +95,54 @@ Copy comes from `src/data/resume.ts`; no new facts are invented.
 
 Each annotation in chapter 4 mirrors a DOM list item, so the career is readable without WebGL.
 
-## 5. Camera ledger (Gate 2 corrections: pulled back, S6)
+## Video background (S9)
+
+The page background is the user's Blender render, scrubbed by scroll, instead of the real-time world (L17, L21). Sections 5 to 8 describe the Three.js world and are **superseded by the video for `/bonsai`**; they stay for reference. Chapters, copy, cards, the 40% left copy column and the mobile bottom cards are unchanged.
+
+**Asset.** `public/bonsai/video/bonsai-1080p.mp4`: the final Blender render the user approved (2026-10-22, Cycles, 64 samples; L34), 1920x1080, 30 fps, 20.0 s, 600 frames, no audio, 13.4 MB. It is re-encoded from `bonsai_blender/bonsai_scroll_world_1080p.mp4` (CRF 17 master) for scrubbing, like midudev/mcp-higgsfield-landing: H.264 CRF 28, a keyframe every 6 frames, and colour tagged BT.709 with the sRGB curve so the browser paints it like the poster:
+
+```sh
+ffmpeg -i bonsai_blender/bonsai_scroll_world_1080p.mp4 -an -c:v libx264 -preset slow -crf 28 \
+  -g 6 -keyint_min 6 -sc_threshold 0 -pix_fmt yuv420p \
+  -color_primaries bt709 -color_trc iec61966-2-1 -colorspace bt709 -color_range tv \
+  -movflags +faststart+write_colr public/bonsai/video/bonsai-1080p.mp4
+ffmpeg -i public/bonsai/video/bonsai-1080p.mp4 -frames:v 1 \
+  -vf "scale=in_color_matrix=bt709:in_range=tv:out_range=pc,format=rgb24" -q:v 4 public/bonsai/video/poster.jpg
+```
+
+`poster.jpg` is frame 0 at 1920 px wide. The path lives in one constant, `VIDEO_SRC` in `src/lib/bonsai/video.ts`.
+
+**Why `<video>` and not an image sequence (L36).** An image sequence on a canvas was tried (L30) after L29 blamed a Chromium seek ceiling. That diagnosis was wrong: counted with `requestVideoFrameCallback`, raw scroll → `currentTime` paints one frame per wheel event (17/s), while an eased target with one seek in flight paints a new frame on every refresh (~80/s), as midu's landing does. The sequence was dropped: it weighed 48 MB and the T11 sprout re-render changed frames the user had approved.
+
+**Chapter to video time.** The mapping uses real scroll pixels, not weight-space progress, because scroll is `scrollY / (documentHeight - viewportHeight)` and the mobile first section carries an extra screen of spacer. The client measures, from the DOM, the `scrollY` at which each chapter section and each career card (`data-branch-stop`) is centred in the viewport, clamped to `[0, maxScroll]`. A pure function (`createVideoTimeMap` in `video.ts`) interpolates piecewise-linearly between those positions and the video times below: scrollTop 0 is 0 s, `maxScroll` is the last frame (19.97 s), and one scroll position always gives one time, forward or backward. It re-measures on resize (ignoring the touch URL-bar resize), on `load`, when fonts are ready, and through a `ResizeObserver` on `<main>`.
+
+| Chapter | Video time | What the video shows |
+|---|---|---|
+| `seed` | 0.8 s | The seed (seed phase 0 to 1.5 s) |
+| `sprout` | 2.2 s | First sprout |
+| `trunk` | 4.4 s | Young tree with the pagoda, wire on the trunk (trunk grows 1.0 to 9.8 s) |
+| `branches` 1 / 2 / 3 / 4 | 6.4 / 7.5 / 8.6 / 9.6 s | One stop per job, oldest first, at the middle of its slice; the 6 video branches start growing at 4.5, 5.1, 5.5, 5.9, 6.5 and 7.2 s and finish by 10.6 s |
+| `branches` (middle) | 8.05 s | Between stops 2 and 3 |
+| `pruning` | 12.8 s | Torii at golden hour (12 to 14 s) |
+| `pagoda` | 15.6 s | Lit pagoda at sunset (lights ramp 14.6 to 16 s) |
+| `finished` | 19.97 s | Lanterns (~17 s) into night (~19 s). It is the last section, so centring it is `maxScroll`: it holds the last frame |
+
+The branch stop times come from the Blender scene: `BRANCH_DEFS` start times are `time_when_front(u0 + 0.035)` on the trunk front `T_TRUNK0..T_TRUNK1` = 1.0 to 9.8 s, each branch grows for 3.4 s, and the four stops are spread through that growth so a new job reads as a new branch.
+
+**Scrubbing rules** (`scrub.ts`, `video-mount.ts`).
+- The video never plays. Scroll sets a target time; a frame loop eases the video toward it at any distance (damping 14 per second; a 10 s jump such as `finished` to `pagoda` settles in ~0.5 s and travels through the frames in between). There is no hard jump: it left a 522 ms gap on a fast scroll (L36).
+- At most one seek is in flight (`seeking` blocks the next one; `seeked` wakes the loop), and a seek smaller than half a frame (1/60 s) is skipped.
+- The loop sleeps when the video has settled (`loop.ts`), and pauses while the tab is hidden.
+- The `<video>` has no `src` in the markup (`data-src`, `preload="none"`). On mount the file is fetched whole and handed over as a blob URL, so seeks never wait on the network (a cold load at 20 Mbps left a 223 ms gap with range requests, L36). If the fetch fails the plain URL is used; with `navigator.connection.saveData` the blob is skipped. The object URL is revoked on teardown. Until `loadeddata` only the poster shows.
+- After `loadeddata` the mount does one muted `play()` followed at once by `pause()`, because iOS Safari paints seeked frames only after one play; the first pointer or touch repeats it as a fallback. Nothing else calls `play()`.
+- Reloading at depth snaps to the exact time instead of travelling from 0.
+- Framing: `object-fit: cover`; `object-position` 62% 50% on desktop and 60% 50% below 768px (the tree sits at ~0.58 of the frame width in the branches phase), so the right and centre (the tree) stay in view. A forest-deep gradient scrim sits behind the copy column (left on desktop, bottom on mobile); cards are cream at 92% to 95% with a backdrop blur, and body, forest and ink text keep 4.5:1 even over a black frame.
+
+**Reduced motion and fallback.**
+- `prefers-reduced-motion: reduce`: no damping and no continuous scrubbing. The video jumps to the anchor time of the active chapter (active once its section top crosses the viewport centre), so each chapter shows one still.
+- The poster is the background of the container, so it shows until the first frame is decoded (`loadeddata`) and stays if the video errors, cannot load, or JavaScript is off. The scrubber never throws; errors only leave the poster on screen.
+
+## 5. Camera ledger (Gate 2 corrections: pulled back, S6) — superseded by the video, kept for reference
 
 The Gate 2 graybox sat too close to its subject in every chapter. Every camera is now 1.3x to 2.7x further from its target (desktop and mobile), and the table below is the new set of endpoints. Pull-back per chapter: `seed` and `sprout` 1.35x; `branches` 1.4x to 1.8x (1.4x extra on mobile); `pagoda` 1.6x desktop, 1.35x mobile (top tier in frame); `trunk` 2.7x desktop, 2.6x mobile (the whole trunk and its wire in frame, target raised to y 22); `pruning` 2.5x desktop, 3.1x mobile (the crown); `finished` 1.35x desktop, 1.45x mobile (the whole tree in frame).
 
@@ -115,7 +162,7 @@ Composition: the renderer shifts the lens (`setViewOffset`) so each target is dr
 
 Path: Catmull-Rom position and target curves between endpoints, with FOV interpolated per segment. A clearance guard keeps the damped camera at least 8 units from the trunk, branches and foliage after fast jumps. A debug route draws the path, frustums and chapter labels.
 
-## 6. Growth technique (the core risk)
+## 6. Growth technique (the core risk) — superseded by the video, kept for reference
 
 Static bonsai models cannot grow, so the tree is **generated in code once** (seeded) as the final shape, and scroll reveals it:
 
@@ -130,7 +177,7 @@ The generator is decided by a spike at Gate 2:
 - **`@dgreenheck/ez-tree`**: an existing Three.js generator with bark and leaf textures, levels, taper, gnarliness and wind. It has no per-branch birth attribute and no bonsai preset, so it would need a fork or post-processing of its geometry. License still to be verified.
 - **Custom generator**: full control over the bonsai silhouette (moyogi curve, foliage pads) and the growth attributes. More code to write.
 
-## 7. Material, texture and asset ledger
+## 7. Material, texture and asset ledger — superseded by the video, kept for reference
 
 Assets in use (Gate 3, downloaded 2026-10-21). Every file is listed with author, license and source in `public/bonsai/CREDITS.md`. Total: 4.5 MB.
 
@@ -152,7 +199,7 @@ KTX2 and Draco compression are deferred to T6, because no encoder is installed.
 
 Color space: color and emissive maps in sRGB; normal, roughness and AO maps linear.
 
-## 8. Lighting and atmosphere ledger
+## 8. Lighting and atmosphere ledger — superseded by the video, kept for reference
 
 | System | Chapters | Intensity | Shadow | Purpose | Fallback |
 |---|---|---|---|---|---|
@@ -222,7 +269,7 @@ Quality cuts, in order: DPR, then depth of field and haze, then shadow resolutio
 1. **Generator**: ez-tree fork or custom generator (Gate 2 spike).
 2. **Pagoda source**: a CC0 model with an acceptable license and quality, or a simple custom model.
 3. **Realism on mobile**: proven at Gate 6 on a real device; if it fails the budget, mobile drops a tier before losing landmarks.
-4. **Differentiation from the Kage demo**: daylight-to-dusk instead of night, a growing tree instead of a temple, gold instead of vermilion.
+4. **Differentiation from the Kage demo**: day-to-night over a lake with a growing bonsai as the protagonist, instead of a night temple; vermilion appears only on the architecture.
 5. **Chapter copy**: short Spanish copy per chapter, written from `resume.ts`.
 
 ## 14. Approval gates

@@ -1,0 +1,115 @@
+---
+// Scroll-scrubbed video background (S9). Fixed behind the chapter sections; the
+// poster shows until the first frame is decoded and stays if the video fails.
+// The element has no src: the mount fetches the file whole and sets a blob URL
+// (data-src + preload="none", so the file is not downloaded twice).
+// Scroll time mapping: lib/bonsai/video.ts (measured from the sections). Client glue: lib/bonsai/video-mount.ts.
+import { VIDEO_POSTER, VIDEO_SRC } from "../../lib/bonsai/video.ts";
+
+const base = import.meta.env.BASE_URL.replace(/\/?$/, "/");
+const publicUrl = (path: string) => `${base}${path.replace(/^\//, "")}`;
+const src = publicUrl(VIDEO_SRC);
+const poster = publicUrl(VIDEO_POSTER);
+---
+
+<div
+  data-bonsai-video
+  data-state="loading"
+  aria-hidden="true"
+  style={`background-image: url(${poster});`}
+>
+  <video
+    data-src={src}
+    poster={poster}
+    muted
+    playsinline
+    preload="none"
+    disablepictureinpicture
+    tabindex="-1"></video>
+  <div data-bonsai-video-scrim></div>
+</div>
+
+<script>
+  import { mountBonsaiVideo } from "../../lib/bonsai/video-mount.ts";
+
+  let dispose: (() => void) | undefined;
+  try {
+    const root = document.querySelector<HTMLElement>("[data-bonsai-video]");
+    dispose = root ? mountBonsaiVideo(root) : undefined;
+  } catch {
+    // The poster stays; the sections below are plain document flow.
+  }
+
+  if (import.meta.hot) {
+    import.meta.hot.dispose(() => dispose?.());
+  }
+</script>
+
+<style>
+  /* Desktop keeps the right/centre of the frame (the tree) in view when the
+     viewport is narrower than 16:9; the copy column is the left 40%. */
+  [data-bonsai-video] {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+    background-color: var(--color-forest-deep, #0b2620);
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-position: 62% 50%;
+  }
+
+  video {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 62% 50%;
+    opacity: 0;
+    transition: opacity 400ms ease;
+  }
+
+  [data-state="ready"] video {
+    opacity: 1;
+  }
+
+  /* Scrim behind the copy column: keeps the cards readable over bright frames. */
+  [data-bonsai-video-scrim] {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--color-forest-deep, #0b2620) 62%, transparent) 0%,
+      color-mix(in srgb, var(--color-forest-deep, #0b2620) 38%, transparent) 40%,
+      transparent 66%
+    );
+  }
+
+  /* Mobile: crop around the centre-right (the tree) and put the scrim behind
+     the bottom cards. */
+  @media (max-width: 767px) {
+    [data-bonsai-video] {
+      background-position: 60% 50%;
+    }
+
+    video {
+      object-position: 60% 50%;
+    }
+
+    [data-bonsai-video-scrim] {
+      background: linear-gradient(
+        0deg,
+        color-mix(in srgb, var(--color-forest-deep, #0b2620) 68%, transparent) 0%,
+        color-mix(in srgb, var(--color-forest-deep, #0b2620) 40%, transparent) 46%,
+        transparent 74%
+      );
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    video {
+      transition: none;
+    }
+  }
+</style>

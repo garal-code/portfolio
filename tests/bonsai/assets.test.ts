@@ -6,9 +6,13 @@ import { barkRepeat, isColorMap, TEXTURE_MAPS } from "../../src/lib/bonsai/surfa
 
 const root = new URL("../../public/bonsai/", import.meta.url).pathname;
 
+// public/bonsai/video holds the scrubbed background render (S9), not Poly Haven assets.
+const OWN_RENDER_DIR = join(root, "video");
+
 function files(dir: string): string[] {
   return readdirSync(dir).flatMap((name) => {
     const path = join(dir, name);
+    if (path === OWN_RENDER_DIR) return [];
     return statSync(path).isDirectory() ? files(path) : [path];
   });
 }
