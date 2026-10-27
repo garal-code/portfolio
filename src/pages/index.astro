@@ -20,8 +20,8 @@ const sectionStyle = (id: ChapterId) =>
   `--chapter-height: calc(${weight(id)} * 100svh);`;
 
 const years = (start: string, end?: string) => `${start}–${end ?? "hoy"}`;
-// resume.ts lists jobs newest first; the branches grow oldest first, the same
-// order the generator uses.
+// resume.ts lists jobs newest first; the branches grow oldest first in the
+// video, so the career timeline does too.
 const careerJobs = careerOrder(jobs);
 const careerSlice = weight("branches") / careerJobs.length;
 

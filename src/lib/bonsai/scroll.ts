@@ -1,7 +1,6 @@
 // Native-scroll driver adapted from threejs-scroll-worlds/references/scroll-conductor.js.
-// Differences: no internal RAF (the world loop calls `update`), and progress is
-// scrollY / maxScroll because chapter spans already come from `scrollWeight`
-// (conductor.ts), instead of measured section anchors.
+// Differences: no internal RAF (the video loop calls `update`), and progress is
+// scrollY / maxScroll instead of measured section anchors.
 
 export interface ScrollDriver {
   start(): void;
@@ -11,9 +10,9 @@ export interface ScrollDriver {
   /** Advances the damped value. Returns true while it is still moving. */
   update(dt: number): boolean;
   setReducedMotion(value: boolean): void;
-  /** Exact normalized progress: drives growth, chapter state and the DOM. */
+  /** Exact normalized progress: drives the video time. */
   readonly exact: number;
-  /** Damped progress: drives the camera only. */
+  /** Damped progress. */
   readonly smooth: number;
   readonly direction: number;
 }

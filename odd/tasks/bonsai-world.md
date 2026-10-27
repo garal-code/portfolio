@@ -2,7 +2,7 @@
 
 Realistic Three.js scroll world for the Garal portfolio: a bonsai that grows and is shaped as the visitor scrolls.
 Design source: `docs/bonsai-world/world-bible.md` (Gate 1 approved) and `DESIGN.md`. Branch: `feat/bonsai-world`.
-Current phase: Gate 2 (graybox, camera endpoints, growth generator).
+Current phase: delivery (video world at `/`; Three.js removed, L56).
 
 ## Specs
 
@@ -59,6 +59,7 @@ Current phase: Gate 2 (graybox, camera endpoints, growth generator).
 | T19 ✅ | Remove the Hablemos card (keep the finished scroll stretch for the video ending); fixed top-right bar (L45) with LinkedIn, email, GitHub and Portfolio App; rename the project to Portfolio App | S14 | inline | see L44 |
 | T20 ✅ | Three flowing blocks (intro, career timeline, practice) with a sticky frame per block and a scroll-driven column (`card-flow.ts`, `card-flow-mount.ts`); rename "Cómo trabajo" | S15 | inline | `3590e51`, see L52 |
 | T21 ✅ | Intro column gap computed so only the second card's title peeks in (`peekGap`); Portfolio App bar button in gold | S16 | inline | `c59fd1e`, see L54 |
+| T22 ✅ | Remove the unused Three.js world (T9 follow-up): its modules, tests, Poly Haven assets and the `three`/`@types/three` dependencies; `chapters.ts` keeps only ids and scroll weights | S9 | inline | see L56 |
 | T5 ✅ | Gate 3: realistic materials (PBR bark, moss, rocks, ceramic, soil) proven on the trunk chapter, plus the setting-sun lighting system across all chapters | S2, S5, S8 | worker, then parent | `0eea529`, `f8c959f` (Gate 3 user approval pending) |
 | T6 | Gates 4–6: transitions, mobile tier and performance budget | S2, S4 | pending | — |
 | T7 ✅ | Integrate into home with semantic DOM content, reduced-motion and no-WebGL fallback (done as the video world at `/`, L50) | S3, S5 | inline | see L50 |
@@ -145,5 +146,6 @@ El ultimo segundo es muy oscuro completamente de noche, eso no me gusta quiero q
 - **L53** (user): see S16.
 - **L54** (evidence, T21): The gap depends on the viewport and the first card, so it is computed (`peekGap`) instead of fixed in CSS: one `row-gap` for the whole intro column, desktop only. Tests RED first, then GREEN; 141/141 pass. Chromium, on arrival: 1280×720 gap 104 px, 1440×900 230 px, 1920×1200 411 px, equal between the three cards; 81 px of "Dónde empezó" show (the whole title) and "Los fundamentos" is off screen in all three; mobile keeps 12 px. Across the page: no overlap, no empty screen before the ending, no card faster than the scroll, 0 errors. The bar button computes to `oklch(0.82 0.14 80)` with forest text (the "Ver Portfolio App" button inside the card stays forest).
 - **L55** (user): "sii si actualmente me convence el diseño esto cierralo pushealo y abre PR necesarias". Delivery: T20 and T21 (`3590e51`, `c59fd1e`, +674/−202) would push PR #4 past 1100 lines, so they ship as a fourth chain slice, `feat/bonsai-world-04-card-flow` on top of `feat/bonsai-world` (#4), which stays at `155afbb`. 141/141 pass at the tip. The Three.js removal (T9 follow-up) is still pending.
+- **L56** (user, T22): "saclo ya y ponla PR tambien". Removed 14 modules under `src/lib/bonsai` (world, assets, debug, graybox, sky, tree, sun, framing, clearance, conductor, generator, growth, random, surfaces), `BonsaiWorld.astro`, their 7 test files and one career test that read the generator, `public/bonsai/{CREDITS.md,env,models,textures}` (4.5 MB), and `three`/`@types/three`. `chapters.ts` drops the camera, growth and light data and keeps ids and scroll weights, which the page and the video map use. One test RED first (package still listed `three`), then GREEN; 82/82 pass. `astro build` into a temp dir: 1 page, no `three` chunk, output 13 MB (the video). Chromium 1440×900: page height 8460 px (unchanged), video scrubs with the scroll, the intro peek looks the same, 0 console errors.
 - **L9** (delivery): The branch holds 5 reviewable commits (~2.9k authored lines). Opening the PR(s) and how to split them stays the user's decision.
 - **L7** (decision): Graybox ships on a separate `/bonsai` route so the current home stays untouched until T7. Tests use the built-in `node --test` runner (Node 26 strips TypeScript natively), so no test dependency is added.
