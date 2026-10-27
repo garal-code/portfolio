@@ -4,6 +4,8 @@ Scroll-driven Three.js world for the Garal portfolio, built with the `threejs-sc
 Status: **Gate 1 draft** (world sentence, topology and story order), pending approval. Camera, material and budget values are starting points to be proven in later gates.
 Visual identity: `DESIGN.md` wins over anything here that conflicts with it.
 
+> **Superseded (S9, L56).** The real-time Three.js world was replaced by a scroll-scrubbed video of a Blender render, and its code, the `three` dependency and the Poly Haven assets were removed. This bible stays as the design record: the story order (section 4) and the scroll weights still drive the page; camera, material and lighting sections no longer map to code.
+
 ## 1. Intake
 
 | Field | Decision |
@@ -179,7 +181,7 @@ The generator is decided by a spike at Gate 2:
 
 ## 7. Material, texture and asset ledger — superseded by the video, kept for reference
 
-Assets in use (Gate 3, downloaded 2026-10-21). Every file is listed with author, license and source in `public/bonsai/CREDITS.md`. Total: 4.5 MB.
+Assets in use (Gate 3, downloaded 2026-10-21). Every file was listed with author, license and source in `public/bonsai/CREDITS.md` (removed with the assets, L56). Total: 4.5 MB.
 
 | Asset | Source | License | Treatment |
 |---|---|---|---|

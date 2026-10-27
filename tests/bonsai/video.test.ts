@@ -174,6 +174,18 @@ test("the page mounts BonsaiVideo and no longer mounts BonsaiWorld", () => {
   assert.doesNotMatch(page, /BonsaiWorld/);
 });
 
+test("the Three.js world is gone: no three dependency, no module imports it, no 3D assets", () => {
+  const pkg = JSON.parse(read("package.json"));
+  assert.equal(pkg.dependencies?.three, undefined);
+  assert.equal(pkg.devDependencies?.["@types/three"], undefined);
+  const root = new URL("../../", import.meta.url).pathname;
+  const importers = [...sources(join(root, "src")), ...sources(join(root, "tests"))]
+    .filter((path) => /from "three["/]/.test(readFileSync(path, "utf8")))
+    .map((path) => path.slice(root.length));
+  assert.deepEqual(importers, []);
+  assert.deepEqual(readdirSync(join(root, "public/bonsai")), ["video"]);
+});
+
 test("the video file name is written once in src, as a constant", () => {
   const root = new URL("../../src/", import.meta.url).pathname;
   const file = read("src/lib/bonsai/video.ts").match(/VIDEO_SRC = "[^"]*\/([^"\/]+\.mp4)"/)?.[1] ?? "";

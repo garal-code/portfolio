@@ -2,7 +2,6 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { careerEntries, careerOrder } from "../../src/lib/bonsai/career.ts";
-import { generateBonsai } from "../../src/lib/bonsai/generator.ts";
 import { jobs } from "../../src/data/resume.ts";
 
 test("careerOrder returns the resume jobs oldest first, by startDate", () => {
@@ -33,25 +32,6 @@ test("careerOrder does not mutate its input and handles month precision and ties
   assert.deepEqual(
     careerEntries(input).map((entry) => entry.index),
     [2, 3, 1, 0],
-  );
-});
-
-test("the generator's career branches follow the helper, even for a shuffled job list", () => {
-  const shuffled = [jobs[1]!, jobs[3]!, jobs[0]!, jobs[2]!];
-  const expected = careerEntries(shuffled).map((entry) => entry.index);
-  const { branches } = generateBonsai(undefined, { jobs: shuffled });
-  assert.deepEqual(
-    branches.map((branch) => branch.jobIndex),
-    expected,
-  );
-  assert.deepEqual(
-    branches.map((branch) => shuffled[branch.jobIndex]!.startDate),
-    careerOrder(shuffled).map((job) => job.startDate),
-  );
-  const real = generateBonsai();
-  assert.deepEqual(
-    real.branches.map((branch) => jobs[branch.jobIndex]),
-    careerOrder(jobs),
   );
 });
 

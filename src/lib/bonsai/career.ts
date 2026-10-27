@@ -1,5 +1,5 @@
 // One source for the career order: oldest job first, like the branches grow.
-// resume.ts lists jobs newest first; the generator and /bonsai both use this.
+// resume.ts lists jobs newest first; the career timeline on the page uses this.
 
 export interface CareerEntry<T> {
   job: T;
